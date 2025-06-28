@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - ระบบจัดการข้อมูลบุคลากร</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/responsive/3.0.2/css/responsive.bootstrap5.css"
+    />
+    <style>
+      /* ซ่อนเนื้อหาไว้ก่อนจนกว่าจะแน่ใจว่า login แล้ว เพื่อป้องกันการกระพริบ */
+      [v-cloak] {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app" v-cloak>
+      <div class="container mt-4">
+        <div
+          class="d-flex justify-content-between align-items-center mb-4 flex-wrap"
+        >
+          <h2><i class="fas fa-cogs"></i> Admin Panel</h2>
+          <div class="d-flex align-items-center">
+            <a
+              href="index.html"
+              class="btn btn-outline-success me-3"
+              target="_blank"
+            >
+              <i class="fas fa-home"></i> กลับหน้าแรก
+            </a>
+
+            <span class="me-3" v-if="user.full_name"
+              ><i class="fas fa-user-circle"></i> ยินดีต้อนรับ,
+              <strong>{{ user.full_name }}</strong></span
+            >
+            <a href="logout.php" class="btn btn-danger"
+              ><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</a
+            >
+          </div>
+        </div>
+
+        <ul class="nav nav-tabs" id="adminTab" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button
+              class="nav-link active"
+              id="personnel-tab"
+              data-bs-toggle="tab"
+              data-bs-target="#personnel-tab-pane"
+              type="button"
+              role="tab"
+            >
+              <i class="fas fa-users"></i> จัดการข้อมูลบุคลากร
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button
+              class="nav-link"
+              id="users-tab"
+              data-bs-toggle="tab"
+              data-bs-target="#users-tab-pane"
+              type="button"
+              role="tab"
+            >
+              <i class="fas fa-user-cog"></i> จัดการผู้ใช้งาน
+            </button>
+          </li>
+        </ul>
+
+        <div class="tab-content" id="adminTabContent">
+          <div
+            class="tab-pane fade show active"
+            id="personnel-tab-pane"
+            role="tabpanel"
+          >
+            <div class="d-flex justify-content-end mb-3">
+              <button class="btn btn-primary" @click="openModal()">
+                <i class="fas fa-plus"></i> เพิ่มข้อมูลใหม่
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table
+                id="personnelTable"
+                class="table table-striped table-bordered nowrap"
+                style="width: 100%"
+              >
+                <thead class="table-dark">
+                  <tr>
+                    <th>รูปภาพ</th>
+                    <th>ยศ-ชื่อ-สกุล</th>
+                    <th>ตำแหน่ง</th>
+                    <th>อายุ</th>
+                    <th>จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="p in personnelList" :key="p.id">
+                    <td class="text-center">
+                      <img
+                        v-if="p.profile_image"
+                        :src="'uploads/' + p.profile_image"
+                        width="50"
+                        height="50"
+                        class="rounded-circle"
+                        style="object-fit: cover"
+                      /><i
+                        v-else
+                        class="fas fa-user-circle fa-2x text-secondary"
+                      ></i>
+                    </td>
+                    <td>{{ p.rank }} {{ p.first_name }} {{ p.last_name }}</td>
+                    <td>{{ p.position }}</td>
+                    <td>{{ p.age ? p.age + ' ปี' : '' }}</td>
+                    <td>
+                      <button
+                        class="btn btn-sm btn-info"
+                        @click="openPreviewModal(p)"
+                      >
+                        <i class="fas fa-eye"></i> ดู
+                      </button>
+                      <button
+                        class="btn btn-sm btn-warning"
+                        @click="openModal(p)"
+                      >
+                        <i class="fas fa-edit"></i> แก้ไข
+                      </button>
+                      <button
+                        class="btn btn-sm btn-danger"
+                        @click="deletePersonnel(p.id)"
+                      >
+                        <i class="fas fa-trash"></i> ลบ
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="tab-pane fade" id="users-tab-pane" role="tabpanel">
+            <div class="d-flex justify-content-end mb-3">
+              <button class="btn btn-success" @click="openUserModal()">
+                <i class="fas fa-user-plus"></i> เพิ่มผู้ใช้ใหม่
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table
+                id="usersTable"
+                class="table table-striped table-bordered nowrap"
+                style="width: 100%"
+              >
+                <thead class="table-dark">
+                  <tr>
+                    <th>Username</th>
+                    <th>ชื่อ-สกุล</th>
+                    <th>วันที่สร้าง</th>
+                    <th>จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="u in users" :key="u.id">
+                    <td>{{ u.username }}</td>
+                    <td>{{ u.full_name }}</td>
+                    <td>
+                      {{ new Date(u.created_at).toLocaleDateString('th-TH') }}
+                    </td>
+                    <td>
+                      <button
+                        class="btn btn-sm btn-warning"
+                        @click="openUserModal(u)"
+                      >
+                        <i class="fas fa-edit"></i> แก้ไข
+                      </button>
+                      <button
+                        class="btn btn-sm btn-danger"
+                        @click="deleteUser(u.id)"
+                        :disabled="u.id === user.id"
+                      >
+                        <i class="fas fa-trash"></i> ลบ
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal fade" id="personnelModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">
+                {{ currentPersonnel.id ? 'แก้ไขข้อมูล' : 'เพิ่มข้อมูลใหม่' }}
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <form @submit.prevent="savePersonnel">
+                <div class="text-center mb-4">
+                  <img
+                    :src="imagePreview"
+                    class="rounded-circle mb-2"
+                    width="120"
+                    height="120"
+                    style="object-fit: cover; border: 2px solid #ddd"
+                  />
+                  <div>
+                    <label
+                      for="fileInput"
+                      class="btn btn-sm btn-outline-primary"
+                      >เลือกรูปภาพ</label
+                    >
+                    <input
+                      type="file"
+                      id="fileInput"
+                      ref="fileInput"
+                      @change="handleImageUpload"
+                      class="d-none"
+                      accept="image/*"
+                    />
+                    <button
+                      v-if="imagePreview && imagePreview !== 'uploads/placeholder.png'"
+                      type="button"
+                      class="btn btn-sm btn-outline-danger"
+                      @click="removeImage"
+                    >
+                      ลบรูป
+                    </button>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">เลขประจำตัวประชาชน</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      v-model="currentPersonnel.national_id"
+                      required
+                    />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-3 mb-3">
+                    <label class="form-label">ยศ</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      v-model="currentPersonnel.rank"
+                    />
+                  </div>
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">ชื่อ</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      v-model="currentPersonnel.first_name"
+                      required
+                    />
+                  </div>
+                  <div class="col-md-5 mb-3">
+                    <label class="form-label">สกุล</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      v-model="currentPersonnel.last_name"
+                      required
+                    />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">ตำแหน่ง</label>
+                    <select
+                      class="form-select"
+                      v-model="currentPersonnel.position"
+                    >
+                      <option value="" disabled>-- กรุณาเลือกตำแหน่ง --</option>
+                      <option value="นายสิบการเงิน">นายสิบการเงิน</option>
+                      <option value="เสมียน">เสมียน</option>
+                      <option value="เจ้าหน้าที่ธุรการ">
+                        เจ้าหน้าที่ธุรการ
+                      </option>
+                      <option value="นักวิเคราะห์นโยบายและแผน">
+                        นักวิเคราะห์นโยบายและแผน
+                      </option>
+                      <option value="เจ้าพนักงานพัสดุ">เจ้าพนักงานพัสดุ</option>
+                      <option value="อื่นๆ">อื่นๆ</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">วุฒิการศึกษา</label>
+                    <select
+                      class="form-select"
+                      v-model="currentPersonnel.education"
+                    >
+                      <option value="" disabled>-- กรุณาเลือกวุฒิ --</option>
+                      <option value="มัธยมศึกษาปีที่ 6">
+                        มัธยมศึกษาปีที่ 6
+                      </option>
+                      <option value="ปวช.">ปวช.</option>
+                      <option value="ปวส.">ปวส.</option>
+                      <option value="ปริญญาตรี">ปริญญาตรี</option>
+                      <option value="ปริญญาโท">ปริญญาโท</option>
+                      <option value="ปริญญาเอก">ปริญญาเอก</option>
+                    </select>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">วัน/เดือน/ปี เกิด</label>
+                      <input
+                        type="date"
+                        class="form-control"
+                        v-model="currentPersonnel.date_of_birth"
+                      />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">เบอร์โทรศัพท์</label>
+                      <input
+                        type="text"
+                        class="form-control"
+                        v-model="currentPersonnel.phone_number"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">บ้านเลขที่</label>
+                      <input
+                        type="text"
+                        class="form-control"
+                        v-model="currentPersonnel.addr_houseno"
+                      />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">หมู่ที่</label>
+                      <input
+                        type="text"
+                        class="form-control"
+                        v-model="currentPersonnel.addr_moo"
+                      />
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label"
+                        >จังหวัด {{currentPersonnel.addr_changwat}}</label
+                      >
+                      <select
+                        class="form-select"
+                        v-model="selected.province_id"
+                      >
+                        <option disabled value="">-- เลือกจังหวัด --</option>
+                        <option
+                          v-for="p in address.provinces"
+                          :key="p.id"
+                          :value="p.id"
+                        >
+                          {{ p.name_th }}
+                        </option>
+                      </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label"
+                        >อำเภอ/เขต {{currentPersonnel.addr_amphoe}}</label
+                      >
+                      <select
+                        class="form-select"
+                        v-model="selected.amphure_id"
+                        :disabled="!selected.province_id"
+                      >
+                        <option disabled value="">-- เลือกอำเภอ --</option>
+                        <option
+                          v-for="a in address.amphures"
+                          :key="a.id"
+                          :value="a.id"
+                        >
+                          {{ a.name_th }}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label"
+                        >ตำบล/แขวง {{currentPersonnel.addr_tambon}}</label
+                      >
+                      <select
+                        class="form-select"
+                        v-model="selected.tambon_id"
+                        :disabled="!selected.amphure_id"
+                      >
+                        <option disabled value="">-- เลือกตำบล --</option>
+                        <option
+                          v-for="t in address.tambons"
+                          :key="t.id"
+                          :value="t.id"
+                        >
+                          {{ t.name_th }}
+                        </option>
+                      </select>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">รหัสไปรษณีย์</label>
+                      <input
+                        type="text"
+                        class="form-control"
+                        v-model="currentPersonnel.addr_postalcode"
+                        readonly
+                      />
+                    </div>
+                  </div>
+
+                  <hr />
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">วันเดือนปีที่ดำรงตำแหน่ง</label>
+                      <input
+                        type="date"
+                        class="form-control"
+                        v-model="currentPersonnel.position_start_date"
+                      />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label"
+                        >วันเดือนปีที่ครบการดำรงตำแหน่ง</label
+                      >
+                      <input
+                        type="date"
+                        class="form-control"
+                        v-model="currentPersonnel.position_end_date"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">วาระ (ปี)</label>
+                      <input
+                        type="number"
+                        class="form-control"
+                        v-model="currentPersonnel.term_years"
+                        placeholder="เช่น 4"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal"
+                  >
+                    ปิด
+                  </button>
+                  <button type="submit" class="btn btn-primary">
+                    บันทึกข้อมูล
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal fade" id="previewModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+              <h5 class="modal-title">
+                <i class="fas fa-id-card"></i> รายละเอียดข้อมูล
+              </h5>
+              <button
+                type="button"
+                class="btn-close btn-close-white"
+                data-bs-dismiss="modal"
+              ></button>
+            </div>
+            <div class="modal-body" v-if="selectedPersonnel">
+              <div class="row">
+                <div class="col-md-4 text-center">
+                  <img
+                    v-if="selectedPersonnel.profile_image"
+                    :src="'uploads/' + selectedPersonnel.profile_image"
+                    class="img-fluid rounded-3 mb-3"
+                    style="max-height: 200px"
+                  />
+                  <i
+                    v-else
+                    class="fas fa-user-circle fa-6x text-secondary mb-3"
+                  ></i>
+                  <h4>
+                    {{ selectedPersonnel.rank }} {{ selectedPersonnel.first_name
+                    }} {{ selectedPersonnel.last_name }}
+                  </h4>
+                  <p class="text-muted">{{ selectedPersonnel.position }}</p>
+                </div>
+
+                <div class="col-md-8">
+                  <h6><i class="fas fa-user"></i> ข้อมูลส่วนตัว</h6>
+                  <hr class="mt-0" />
+                  <dl class="row">
+                    <dt class="col-sm-4">เลขประจำตัวประชาชน</dt>
+                    <dd class="col-sm-8">
+                      {{ selectedPersonnel.national_id }}
+                    </dd>
+
+                    <dt class="col-sm-4">วันเกิด</dt>
+                    <dd class="col-sm-8">
+                      {{ selectedPersonnel.date_of_birth ?
+                      selectedPersonnel.date_of_birth : '-' }}
+                    </dd>
+
+                    <dt class="col-sm-4">อายุ</dt>
+                    <dd class="col-sm-8">
+                      {{ selectedPersonnel.age ? selectedPersonnel.age + ' ปี' :
+                      '-' }}
+                    </dd>
+
+                    <dt class="col-sm-4">วุฒิการศึกษา</dt>
+                    <dd class="col-sm-8">
+                      {{ selectedPersonnel.education || '-' }}
+                    </dd>
+
+                    <dt class="col-sm-4">เบอร์โทรศัพท์</dt>
+                    <dd class="col-sm-8">
+                      {{ selectedPersonnel.phone_number || '-' }}
+                    </dd>
+                  </dl>
+
+                  <h6 class="mt-3">
+                    <i class="fas fa-map-marker-alt"></i> ที่อยู่
+                  </h6>
+                  <hr class="mt-0" />
+                  <p>
+                    <template v-if="selectedPersonnel.addr_houseno">
+                      บ้านเลขที่ {{ selectedPersonnel.addr_houseno }}
+                    </template>
+                    <template v-if="selectedPersonnel.addr_moo">
+                      หมู่ {{ selectedPersonnel.addr_moo }}
+                    </template>
+                    <template v-if="selectedPersonnel.addr_tambon">
+                      ต.{{ selectedPersonnel.addr_tambon }}
+                    </template>
+                    <template v-if="selectedPersonnel.addr_amphoe">
+                      อ.{{ selectedPersonnel.addr_amphoe }}
+                    </template>
+                    <template v-if="selectedPersonnel.addr_changwat">
+                      จ.{{ selectedPersonnel.addr_changwat }}
+                    </template>
+                    {{ selectedPersonnel.addr_postalcode }}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                ปิด
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal fade" id="userModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">
+                {{ currentUser.id ? 'แก้ไขผู้ใช้งาน' : 'เพิ่มผู้ใช้งานใหม่' }}
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+              ></button>
+            </div>
+            <form @submit.prevent="saveUser">
+              <div class="modal-body">
+                <div class="mb-3">
+                  <label class="form-label">ชื่อ-สกุล</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    v-model="currentUser.full_name"
+                    required
+                  />
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Username</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    v-model="currentUser.username"
+                    :disabled="currentUser.id"
+                    required
+                  />
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Password</label>
+                  <input
+                    type="password"
+                    class="form-control"
+                    v-model="currentUser.password"
+                    :placeholder="currentUser.id ? 'เว้นว่างไว้ถ้าไม่ต้องการเปลี่ยน' : ''"
+                    :required="!currentUser.id"
+                  />
+                  <div class="form-text" v-if="currentUser.id">
+                    กรอกรหัสผ่านใหม่เพื่อทำการเปลี่ยนแปลง
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  data-bs-dismiss="modal"
+                >
+                  ปิด
+                </button>
+                <button type="submit" class="btn btn-primary">บันทึก</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.2/js/dataTables.responsive.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.2/js/responsive.bootstrap5.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+      const { createApp } = Vue;
+
+      // --- ส่วนตรวจสอบการ Login ---
+      // ใช้ IIFE (Immediately Invoked Function Expression) เพื่อให้ฟังก์ชันทำงานทันที
+      (async () => {
+        try {
+          // 1. เรียก API เพื่อตรวจสอบ session
+          const sessionResponse = await axios.get(
+            "api/auth.php?action=check_session"
+          );
+
+          // 2. ถ้า API ตอบกลับว่า login สำเร็จ
+          if (sessionResponse.data.success && sessionResponse.data.loggedIn) {
+            // 3. สร้างและเมาท์แอป Vue
+            mountVueApp(sessionResponse.data.user);
+          } else {
+            // 4. ถ้ายังไม่ได้ login, แจ้งเตือนและส่งกลับไปหน้า login
+            handleNotLoggedIn();
+          }
+        } catch (error) {
+          console.error("Session check failed:", error);
+          handleNotLoggedIn("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
+        }
+      })();
+
+      function handleNotLoggedIn(message = "คุณจะถูกส่งไปยังหน้า Login") {
+        Swal.fire({
+          icon: "warning",
+          title: "กรุณาเข้าสู่ระบบก่อน",
+          text: message,
+          showConfirmButton: false,
+          timer: 2500,
+          allowOutsideClick: false,
+        }).then(() => {
+          window.location.href = "login.html";
+        });
+      }
+
+      // --- ส่วนของแอปพลิเคชัน Vue ---
+      function mountVueApp(loggedInUser) {
+        createApp({
+          data() {
+            return {
+              user: loggedInUser, // เก็บข้อมูลผู้ใช้ที่ login
+              personnelList: [],
+              currentPersonnel: {},
+              personnelModal: null,
+              address: {
+                provinces: [],
+                amphures: [],
+                tambons: [],
+              },
+              selected: {
+                province_id: "",
+                amphure_id: "",
+                tambon_id: "",
+              },
+              imageFile: null,
+              imagePreview: "placeholder.png",
+              selectedPersonnel: null,
+              previewModalInstance: null,
+              users: [],
+              currentUser: {},
+              userModalInstance: null,
+            };
+          },
+
+          watch: {
+            // เมื่อมีการเลือกจังหวัด
+            "selected.province_id"(newId, oldId) {
+              if (newId) {
+                // ล้างค่าเก่าและดึงข้อมูลอำเภอใหม่
+                this.selected.amphure_id = "";
+                this.selected.tambon_id = "";
+                this.address.amphures = [];
+                this.address.tambons = [];
+                this.currentPersonnel.addr_amphoe = "";
+                this.currentPersonnel.addr_tambon = "";
+                this.currentPersonnel.addr_postalcode = "";
+                this.fetchAmphures(newId);
+                // บันทึกชื่อจังหวัด
+                const province = this.address.provinces.find(
+                  (p) => p.id === newId
+                );
+                this.currentPersonnel.addr_changwat = province
+                  ? province.name_th
+                  : "";
+              }
+            },
+            // เมื่อมีการเลือกอำเภอ
+            "selected.amphure_id"(newId, oldId) {
+              if (newId) {
+                // ล้างค่าเก่าและดึงข้อมูลตำบลใหม่
+                this.selected.tambon_id = "";
+                this.address.tambons = [];
+                this.currentPersonnel.addr_tambon = "";
+                this.currentPersonnel.addr_postalcode = "";
+                this.fetchTambons(newId);
+                // บันทึกชื่ออำเภอ
+                const amphure = this.address.amphures.find(
+                  (a) => a.id === newId
+                );
+                this.currentPersonnel.addr_amphoe = amphure
+                  ? amphure.name_th
+                  : "";
+              }
+            },
+            // เมื่อมีการเลือกตำบล
+            "selected.tambon_id"(newId, oldId) {
+              if (newId) {
+                const tambon = this.address.tambons.find((t) => t.id === newId);
+                if (tambon) {
+                  // กรอกรหัสไปรษณีย์และชื่อตำบลอัตโนมัติ
+                  this.currentPersonnel.addr_postalcode = tambon.zip_code;
+                  this.currentPersonnel.addr_tambon = tambon.name_th;
+                }
+              }
+            },
+            personnelList(newVal) {
+              // ทำลาย DataTable เก่าทิ้งก่อน เพื่อป้องกัน error
+              if ($.fn.dataTable.isDataTable("#personnelTable")) {
+                $("#personnelTable").DataTable().destroy();
+              }
+
+              // รอให้ Vue แสดงผลข้อมูลในตารางให้เสร็จก่อน
+              this.$nextTick(() => {
+                // แล้วจึงสั่งให้ DataTables ทำงาน
+                $("#personnelTable").DataTable({
+                  responsive: true, // เปิดใช้งาน Responsive
+                  // ตั้งค่าภาษาไทย
+                  language: {
+                    lengthMenu: "แสดง _MENU_ รายการ",
+                    zeroRecords: "ไม่พบข้อมูล",
+                    info: "แสดงหน้า _PAGE_ จาก _PAGES_",
+                    infoEmpty: "ไม่มีข้อมูล",
+                    infoFiltered: "(กรองจากทั้งหมด _MAX_ รายการ)",
+                    search: "ค้นหา:",
+                    paginate: {
+                      first: "หน้าแรก",
+                      last: "หน้าสุดท้าย",
+                      next: "ถัดไป",
+                      previous: "ก่อนหน้า",
+                    },
+                  },
+                });
+              });
+            },
+            users(newVal) {
+              if ($.fn.dataTable.isDataTable("#usersTable")) {
+                $("#usersTable").DataTable().destroy();
+              }
+              this.$nextTick(() => {
+                $("#usersTable").DataTable({
+                  responsive: true,
+                  language: {
+                    lengthMenu: "แสดง _MENU_ รายการ",
+                    zeroRecords: "ไม่พบข้อมูล",
+                    info: "แสดงหน้า _PAGE_ จาก _PAGES_",
+                    infoEmpty: "ไม่มีข้อมูล",
+                    infoFiltered: "(กรองจากทั้งหมด _MAX_ รายการ)",
+                    search: "ค้นหา:",
+                    paginate: {
+                      first: "หน้าแรก",
+                      last: "หน้าสุดท้าย",
+                      next: "ถัดไป",
+                      previous: "ก่อนหน้า",
+                    },
+                  },
+                });
+              });
+            },
+          },
+          methods: {
+            async fetchPersonnel() {
+              try {
+                const response = await axios.get(
+                  "api/personnel.php?action=read"
+                );
+                if (response.data.success) {
+                  this.personnelList = response.data.data;
+                }
+              } catch (error) {
+                Swal.fire("ผิดพลาด!", "ไม่สามารถดึงข้อมูลได้", "error");
+              }
+            },
+            openPreviewModal(person) {
+              // คัดลอกข้อมูล person ที่เลือกมาใส่ใน selectedPersonnel
+              this.selectedPersonnel = person;
+              // สั่งให้ Modal แสดงผล
+              this.previewModalInstance.show();
+            },
+            openModal(personnel = null) {
+              this.selected.province_id = "";
+              this.selected.amphure_id = "";
+              this.selected.tambon_id = "";
+              this.address.amphures = [];
+              this.address.tambons = [];
+              this.imageFile = null;
+              this.$refs.fileInput.value = "";
+              this.imagePreview = "uploads/placeholder.png";
+              if (personnel) {
+                this.currentPersonnel = { ...personnel };
+                this.imagePreview = "uploads/" + personnel.profile_image;
+              } else {
+                this.currentPersonnel = {}; // Reset form for new entry
+              }
+              this.personnelModal.show();
+            },
+            async savePersonnel() {
+              // ใช้ FormData เพื่อส่งข้อมูลและไฟล์พร้อมกัน
+              const formData = new FormData();
+              const action = this.currentPersonnel.id ? "update" : "create";
+              formData.append("action", action);
+
+              // วนลูปใส่ข้อมูลจาก currentPersonnel ลงใน formData
+              for (const key in this.currentPersonnel) {
+                if (this.currentPersonnel[key] !== null) {
+                  formData.append(key, this.currentPersonnel[key]);
+                }
+              }
+
+              // เพิ่มไฟล์รูปภาพ ถ้ามีการเลือกไฟล์ใหม่
+              if (this.imageFile) {
+                formData.append("profile_image", this.imageFile);
+              }
+
+              try {
+                const response = await axios.post(
+                  "api/personnel.php",
+                  formData,
+                  {
+                    headers: {
+                      "Content-Type": "multipart/form-data",
+                    },
+                  }
+                );
+
+                if (response.data.success) {
+                  Swal.fire("สำเร็จ!", response.data.message, "success");
+                  this.personnelModal.hide();
+                  if (action === "create") {
+                    window.location.reload();
+                  } else {
+                    this.fetchPersonnel(); // โหลดข้อมูลใหม่เพื่ออัปเดตตาราง
+                  }
+                } else {
+                  Swal.fire(
+                    "ผิดพลาด!",
+                    response.data.error || "ไม่สามารถบันทึกข้อมูลได้",
+                    "error"
+                  );
+                }
+              } catch (error) {
+                console.error("Save error:", error);
+                Swal.fire("ผิดพลาด!", "เกิดข้อผิดพลาดในการเชื่อมต่อ", "error");
+              }
+            },
+            deletePersonnel(id) {
+              Swal.fire({
+                title: "ยืนยันการลบ?",
+                text: "คุณจะไม่สามารถกู้คืนข้อมูลนี้ได้!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "ใช่, ลบเลย!",
+                cancelButtonText: "ยกเลิก",
+              }).then(async (result) => {
+                if (result.isConfirmed) {
+                  try {
+                    const response = await axios.post(
+                      "api/personnel.php?action=delete",
+                      { id: id }
+                    );
+                    if (response.data.success) {
+                      Swal.fire("ลบแล้ว!", "ข้อมูลถูกลบเรียบร้อย", "success");
+                      this.fetchPersonnel();
+                    } else {
+                      Swal.fire("ผิดพลาด!", response.data.error, "error");
+                    }
+                  } catch (error) {
+                    Swal.fire(
+                      "ผิดพลาด!",
+                      "เกิดข้อผิดพลาดในการเชื่อมต่อ",
+                      "error"
+                    );
+                  }
+                }
+              });
+            },
+            async fetchProvinces() {
+              try {
+                const response = await axios.get(
+                  "api/address.php?action=provinces"
+                );
+                if (response.data.success) {
+                  this.address.provinces = response.data.data;
+                }
+              } catch (e) {
+                console.error(e);
+              }
+            },
+            async fetchAmphures(provinceId) {
+              try {
+                const response = await axios.get(
+                  `api/address.php?action=amphures&province_id=${provinceId}`
+                );
+                if (response.data.success) {
+                  this.address.amphures = response.data.data;
+                }
+              } catch (e) {
+                console.error(e);
+              }
+            },
+            async fetchAmphuresName(nameTh) {
+              try {
+                const response = await axios.get(
+                  `api/address.php?action=amphures&name_th=${nameTh}`
+                );
+                if (response.data.success) {
+                  this.address.amphures = response.data.data;
+                }
+              } catch (e) {
+                console.error(e);
+              }
+            },
+            async fetchTambons(amphureId) {
+              try {
+                const response = await axios.get(
+                  `api/address.php?action=tambons&amphure_id=${amphureId}`
+                );
+                if (response.data.success) {
+                  this.address.tambons = response.data.data;
+                }
+              } catch (e) {
+                console.error(e);
+              }
+            },
+            handleImageUpload(event) {
+              const file = event.target.files[0];
+              if (file) {
+                this.imageFile = file;
+                this.imagePreview = URL.createObjectURL(file);
+              }
+            },
+            removeImage() {
+              this.imageFile = null;
+              this.$refs.fileInput.value = "";
+              this.imagePreview =
+                this.currentPersonnel && this.currentPersonnel.profile_image
+                  ? "uploads/" + this.currentPersonnel.profile_image
+                  : "placeholder.png";
+            },
+            async fetchUsers() {
+              try {
+                const response = await axios.get("api/users.php?action=read");
+                if (response.data.success) {
+                  this.users = response.data.data;
+                }
+              } catch (error) {
+                Swal.fire("ผิดพลาด", "ไม่สามารถดึงข้อมูลผู้ใช้งานได้", "error");
+              }
+            },
+            openUserModal(user = null) {
+              if (user) {
+                // สำหรับแก้ไข: ไม่เอา password มาแสดง
+                this.currentUser = {
+                  id: user.id,
+                  username: user.username,
+                  full_name: user.full_name,
+                  password: "",
+                };
+              } else {
+                // สำหรับสร้างใหม่
+                this.currentUser = {
+                  username: "",
+                  password: "",
+                  full_name: "",
+                };
+              }
+              this.userModalInstance.show();
+            },
+            async saveUser() {
+              const action = this.currentUser.id ? "update" : "create";
+              const formData = new FormData();
+              formData.append("action", action);
+              for (const key in this.currentUser) {
+                formData.append(key, this.currentUser[key]);
+              }
+
+              try {
+                const response = await axios.post("api/users.php", formData);
+                if (response.data.success) {
+                  Swal.fire("สำเร็จ!", response.data.message, "success");
+                  this.userModalInstance.hide();
+                  if (action === "create") {
+                    window.location.reload();
+                  } else {
+                    this.fetchUsers();
+                  }
+                }
+              } catch (error) {
+                const message =
+                  error.response?.data?.message || "เกิดข้อผิดพลาด";
+                Swal.fire("ผิดพลาด!", message, "error");
+              }
+            },
+            deleteUser(userId) {
+              Swal.fire({
+                title: "ยืนยันการลบผู้ใช้?",
+                text: "ข้อมูลผู้ใช้นี้จะถูกลบถาวร!",
+                icon: "warning",
+                showCancelButton: true,
+              }).then(async (result) => {
+                if (result.isConfirmed) {
+                  try {
+                    const formData = new FormData();
+                    formData.append("action", "delete");
+                    formData.append("id", userId);
+                    const response = await axios.post(
+                      "api/users.php",
+                      formData
+                    );
+                    if (response.data.success) {
+                      Swal.fire("ลบแล้ว!", response.data.message, "success");
+                      this.fetchUsers();
+                    }
+                  } catch (error) {
+                    const message =
+                      error.response?.data?.message || "เกิดข้อผิดพลาด";
+                    Swal.fire("ผิดพลาด!", message, "error");
+                  }
+                }
+              });
+            },
+          },
+          mounted() {
+            this.fetchPersonnel();
+            this.fetchProvinces();
+            this.fetchUsers();
+            this.personnelModal = new bootstrap.Modal(
+              document.getElementById("personnelModal")
+            );
+            this.previewModalInstance = new bootstrap.Modal(
+              document.getElementById("previewModal")
+            );
+
+            this.userModalInstance = new bootstrap.Modal(
+              document.getElementById("userModal")
+            );
+          },
+        }).mount("#app");
+      }
+    </script>
+  </body>
+</html>
