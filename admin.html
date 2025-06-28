@@ -102,7 +102,7 @@
                     <th>รูปภาพ</th>
                     <th>ยศ-ชื่อ-สกุล</th>
                     <th>ตำแหน่ง</th>
-                    <th>อายุ</th>
+                    <th>ที่อยู่</th>
                     <th>จัดการ</th>
                   </tr>
                 </thead>
@@ -123,7 +123,24 @@
                     </td>
                     <td>{{ p.rank }} {{ p.first_name }} {{ p.last_name }}</td>
                     <td>{{ p.position }}</td>
-                    <td>{{ p.age ? p.age + ' ปี' : '' }}</td>
+                    <td>
+                      <template v-if="p.addr_houseno">
+                        บ้านเลขที่ {{ p.addr_houseno }}
+                      </template>
+                      <template v-if="p.addr_moo">
+                        หมู่ {{ p.addr_moo }}
+                      </template>
+                      <template v-if="p.addr_tambon">
+                        ต.{{ p.addr_tambon }}
+                      </template>
+                      <template v-if="p.addr_amphoe">
+                        อ.{{ p.addr_amphoe }}
+                      </template>
+                      <template v-if="p.addr_changwat">
+                        จ.{{ p.addr_changwat }}
+                      </template>
+                      {{ p.addr_postalcode }}
+                    </td>
                     <td>
                       <button
                         class="btn btn-sm btn-info"
@@ -355,7 +372,10 @@
                   <div class="row">
                     <div class="col-md-6 mb-3">
                       <label class="form-label"
-                        >จังหวัด {{currentPersonnel.addr_changwat}}</label
+                        >จังหวัด
+                        <span class="badge text-bg-primary"
+                          >{{currentPersonnel.addr_changwat}}</span
+                        ></label
                       >
                       <select
                         class="form-select"
@@ -373,7 +393,10 @@
                     </div>
                     <div class="col-md-6 mb-3">
                       <label class="form-label"
-                        >อำเภอ/เขต {{currentPersonnel.addr_amphoe}}</label
+                        >อำเภอ/เขต
+                        <span class="badge text-bg-primary"
+                          >{{currentPersonnel.addr_amphoe}}</span
+                        ></label
                       >
                       <select
                         class="form-select"
@@ -394,7 +417,10 @@
                   <div class="row">
                     <div class="col-md-6 mb-3">
                       <label class="form-label"
-                        >ตำบล/แขวง {{currentPersonnel.addr_tambon}}</label
+                        >ตำบล/แขวง
+                        <span class="badge text-bg-primary"
+                          >{{currentPersonnel.addr_tambon}}</span
+                        ></label
                       >
                       <select
                         class="form-select"
