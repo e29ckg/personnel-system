@@ -13,10 +13,55 @@ $action = $_POST['action'] ?? $_GET['action'] ?? '';
 try {
     switch ($action) {
         case 'read':
-            // สำคัญ: ห้าม SELECT password hash มาเด็ดขาด
-            $stmt = $pdo->query("SELECT id, username, full_name, role, created_at FROM users ORDER BY username ASC");
-            $users = $stmt->fetchAll();
-            echo json_encode(['success' => true, 'data' => $users]);
+            // 1. รับค่า Parameters
+            $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+            $limit = isset($_GET['limit']) ? (int) $_GET['limit'] : 10;
+            $search = $_GET['search'] ?? '';
+            $sortKey = $_GET['sortKey'] ?? 'id';
+            $sortOrder = isset($_GET['sortOrder']) && strtolower($_GET['sortOrder']) === 'asc' ? 'ASC' : 'DESC';
+
+            // 2. Whitelist สำหรับคอลัมน์ที่เรียงข้อมูลได้ (ป้องกัน SQL Injection)
+            $allowedSortKeys = ['id', 'username', 'full_name', 'created_at'];
+            if (!in_array($sortKey, $allowedSortKeys)) {
+                $sortKey = 'id';
+            }
+
+            // 3. สร้าง Query สำหรับการค้นหา
+            $whereClauses = [];
+            $params = [];
+            if (!empty($search)) {
+                $searchTerm = '%' . $search . '%';
+                $whereClauses[] = "(username LIKE ? OR full_name LIKE ?)";
+                array_push($params, $searchTerm, $searchTerm);
+            }
+            $whereSql = count($whereClauses) > 0 ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
+
+            // 4. Query เพื่อนับจำนวนผู้ใช้ทั้งหมด
+            $countSql = "SELECT COUNT(id) FROM users " . $whereSql;
+            $countStmt = $pdo->prepare($countSql);
+            $countStmt->execute($params);
+            $totalRecords = $countStmt->fetchColumn();
+
+            // 5. Query เพื่อดึงข้อมูลผู้ใช้เฉพาะหน้าที่ต้องการ (ห้าม SELECT password)
+            $offset = ($page - 1) * $limit;
+            $dataSql = "
+                SELECT id, username, full_name, role, created_at
+                FROM users
+                {$whereSql}
+                ORDER BY {$sortKey} {$sortOrder}
+                LIMIT {$limit} OFFSET {$offset}
+            ";
+
+            $dataStmt = $pdo->prepare($dataSql);
+            $dataStmt->execute($params);
+            $data = $dataStmt->fetchAll();
+
+            // 6. ส่งข้อมูลกลับในรูปแบบใหม่
+            echo json_encode([
+                'success' => true,
+                'data' => $data,
+                'totalRecords' => (int) $totalRecords
+            ]);
             break;
 
         case 'create':

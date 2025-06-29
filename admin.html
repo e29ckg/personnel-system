@@ -12,16 +12,8 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     />
-    <link
-      rel="stylesheet"
-      href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdn.datatables.net/responsive/3.0.2/css/responsive.bootstrap5.css"
-    />
+
     <style>
-      /* ซ่อนเนื้อหาไว้ก่อนจนกว่าจะแน่ใจว่า login แล้ว เพื่อป้องกันการกระพริบ */
       [v-cloak] {
         display: none;
       }
@@ -86,10 +78,26 @@
             id="personnel-tab-pane"
             role="tabpanel"
           >
-            <div class="d-flex justify-content-end mb-3">
-              <button class="btn btn-primary" @click="openModal()">
-                <i class="fas fa-plus"></i> เพิ่มข้อมูลใหม่
-              </button>
+            <div class="row mb-3 mt-3">
+              <div class="col-md-6">
+                <div class="input-group">
+                  <span class="input-group-text"
+                    ><i class="fas fa-search"></i
+                  ></span>
+                  <input
+                    type="text"
+                    class="form-control"
+                    placeholder="ค้นหาบุคลากร..."
+                    v-model="personnelSearch"
+                    @change="onDataChanged"
+                  />
+                </div>
+              </div>
+              <div class="col-md-6 text-end">
+                <button class="btn btn-primary" @click="openModal()">
+                  <i class="fas fa-plus"></i> เพิ่มข้อมูลใหม่
+                </button>
+              </div>
             </div>
             <div class="table-responsive">
               <table
@@ -100,8 +108,33 @@
                 <thead class="table-dark">
                   <tr>
                     <th>รูปภาพ</th>
-                    <th>คำนำหน้า-ชื่อ-สกุล/ตำแหน่ง</th>
-                    <th>ที่อยู่</th>
+                    <th @click="sortBy('first_name')" style="cursor: pointer">
+                      ยศ-ชื่อ-สกุล
+                      <i
+                        class="fas fa-sort"
+                        v-if="sortKey !== 'first_name'"
+                      ></i>
+                      <i
+                        class="fas fa-sort-up"
+                        v-if="sortKey === 'first_name' && sortAsc"
+                      ></i>
+                      <i
+                        class="fas fa-sort-down"
+                        v-if="sortKey === 'first_name' && !sortAsc"
+                      ></i>
+                    </th>
+                    <th @click="sortBy('position')" style="cursor: pointer">
+                      ที่อยู่
+                      <i class="fas fa-sort" v-if="sortKey !== 'position'"></i>
+                      <i
+                        class="fas fa-sort-up"
+                        v-if="sortKey === 'position' && sortAsc"
+                      ></i>
+                      <i
+                        class="fas fa-sort-down"
+                        v-if="sortKey === 'position' && !sortAsc"
+                      ></i>
+                    </th>
                     <th>จัดการ</th>
                   </tr>
                 </thead>
@@ -121,7 +154,7 @@
                       ></i>
                     </td>
                     <td>
-                      <p>{{ p.rank }} {{ p.first_name }} {{ p.last_name }}</p>
+                      {{ p.rank }} {{ p.first_name }} {{ p.last_name }} <br />
                       <span>{{ p.position }}</span>
                     </td>
                     <td>
@@ -165,14 +198,57 @@
                   </tr>
                 </tbody>
               </table>
+              <nav
+                class="d-flex justify-content-between align-items-center mt-3"
+                v-if="totalPages > 0"
+              >
+                <span
+                  >แสดงผล {{ personnelList.length }} จาก {{
+                  totalPersonnelRecords }} รายการ</span
+                >
+                <div>
+                  <button
+                    class="btn btn-outline-secondary btn-sm"
+                    @click="changePage(currentPage - 1)"
+                    :disabled="currentPage === 1"
+                  >
+                    <i class="fas fa-chevron-left"></i> ก่อนหน้า
+                  </button>
+                  <span class="mx-2"
+                    >หน้า {{ currentPage }} / {{ totalPages }}</span
+                  >
+                  <button
+                    class="btn btn-outline-secondary btn-sm"
+                    @click="changePage(currentPage + 1)"
+                    :disabled="currentPage === totalPages"
+                  >
+                    ถัดไป <i class="fas fa-chevron-right"></i>
+                  </button>
+                </div>
+              </nav>
             </div>
           </div>
 
           <div class="tab-pane fade" id="users-tab-pane" role="tabpanel">
-            <div class="d-flex justify-content-end mb-3">
-              <button class="btn btn-success" @click="openUserModal()">
-                <i class="fas fa-user-plus"></i> เพิ่มผู้ใช้ใหม่
-              </button>
+            <div class="row mb-3 mt-3">
+              <div class="col-md-6">
+                <div class="input-group">
+                  <span class="input-group-text"
+                    ><i class="fas fa-search"></i
+                  ></span>
+                  <input
+                    type="text"
+                    class="form-control"
+                    placeholder="ค้นหา Username หรือ ชื่อ-สกุล..."
+                    v-model="userSearch"
+                  />
+                </div>
+              </div>
+              <div class="col-md-6 text-end">
+                <button class="btn btn-success" @click="openUserModal()">
+                  <i class="fas fa-user-plus"></i> เพิ่มผู้ใช้ใหม่
+                </button>
+              </div>
             </div>
             <div class="table-responsive">
               <table
@@ -182,9 +258,24 @@
               >
                 <thead class="table-dark">
                   <tr>
-                    <th>Username</th>
-                    <th>ชื่อ-สกุล</th>
-                    <th>สิทธิ์</th>
+                    <th
+                      @click="sortUsersBy('username')"
+                      style="cursor: pointer"
+                    >
+                      Username <i class="fas fa-sort"></i>
+                    </th>
+                    <th
+                      @click="sortUsersBy('full_name')"
+                      style="cursor: pointer"
+                    >
+                      ชื่อ-สกุล <i class="fas fa-sort"></i>
+                    </th>
+                    <th
+                      @click="sortUsersBy('created_at')"
+                      style="cursor: pointer"
+                    >
+                      วันที่สร้าง <i class="fas fa-sort"></i>
+                    </th>
                     <th>จัดการ</th>
                   </tr>
                 </thead>
@@ -211,10 +302,39 @@
                   </tr>
                 </tbody>
               </table>
+              <nav
+                class="d-flex justify-content-between align-items-center mt-3"
+                v-if="userTotalPages > 0"
+              >
+                <span
+                  >แสดงผล {{ users.length }} จาก {{ userTotalRecords }}
+                  รายการ</span
+                >
+                <div>
+                  <button
+                    class="btn btn-outline-secondary btn-sm"
+                    @click="changeUserPage(userCurrentPage - 1)"
+                    :disabled="userCurrentPage === 1"
+                  >
+                    <i class="fas fa-chevron-left"></i> ก่อนหน้า
+                  </button>
+                  <span class="mx-2"
+                    >หน้า {{ userCurrentPage }} / {{ userTotalPages }}</span
+                  >
+                  <button
+                    class="btn btn-outline-secondary btn-sm"
+                    @click="changeUserPage(userCurrentPage + 1)"
+                    :disabled="userCurrentPage === userTotalPages"
+                  >
+                    ถัดไป <i class="fas fa-chevron-right"></i>
+                  </button>
+                </div>
+              </nav>
             </div>
           </div>
         </div>
       </div>
+
       <div class="modal fade" id="personnelModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
           <div class="modal-content">
@@ -499,6 +619,7 @@
           </div>
         </div>
       </div>
+
       <div class="modal fade" id="previewModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
           <div class="modal-content">
@@ -675,14 +796,8 @@
           </div>
         </div>
       </div>
+      {{totalPages}}
     </div>
-
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
-    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.js"></script>
-    <script src="https://cdn.datatables.net/responsive/3.0.2/js/dataTables.responsive.js"></script>
-    <script src="https://cdn.datatables.net/responsive/3.0.2/js/responsive.bootstrap5.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -736,6 +851,13 @@
               // user: loggedInUser, // เก็บข้อมูลผู้ใช้ที่ login
               user: JSON.parse(localStorage.getItem("loggedInUser")) || {},
               personnelList: [],
+              personnelSearch: "",
+              totalPersonnelRecords: 0,
+              sortKey: "id",
+              sortAsc: false,
+              currentPage: 1,
+              itemsPerPage: 10,
+              searchDebounce: null,
               currentPersonnel: {},
               personnelModal: null,
               address: {
@@ -749,16 +871,46 @@
                 tambon_id: "",
               },
               imageFile: null,
-              imagePreview: "placeholder.png",
+              imagePreview: "https://placehold.co/400",
               selectedPersonnel: null,
               previewModalInstance: null,
               users: [],
               currentUser: {},
               userModalInstance: null,
+              userSearch: "",
+              userTotalRecords: 0,
+              userSortKey: "id",
+              userSortAsc: false,
+              userCurrentPage: 1,
+              userItemsPerPage: 10,
+              userSearchDebounce: null,
             };
+          },
+          computed: {
+            // Computed Property สำหรับคำนวณจำนวนหน้าทั้งหมด
+            totalPages() {
+              return Math.ceil(this.totalPersonnelRecords / this.itemsPerPage);
+            },
+            userTotalPages() {
+              return Math.ceil(this.userTotalRecords / this.userItemsPerPage);
+            },
           },
 
           watch: {
+            personnelSearch() {
+              clearTimeout(this.searchDebounce);
+              this.searchDebounce = setTimeout(() => {
+                this.currentPage = 1;
+                this.fetchPersonnel();
+              }, 500);
+            },
+            userSearch(newVal) {
+              clearTimeout(this.userSearchDebounce);
+              this.userSearchDebounce = setTimeout(() => {
+                this.userCurrentPage = 1;
+                this.fetchUsers();
+              }, 500);
+            },
             // เมื่อมีการเลือกจังหวัด
             "selected.province_id"(newId, oldId) {
               if (newId) {
@@ -809,72 +961,60 @@
                 }
               }
             },
-            personnelList(newVal) {
-              // ทำลาย DataTable เก่าทิ้งก่อน เพื่อป้องกัน error
-              if ($.fn.dataTable.isDataTable("#personnelTable")) {
-                $("#personnelTable").DataTable().destroy();
-              }
-
-              // รอให้ Vue แสดงผลข้อมูลในตารางให้เสร็จก่อน
-              this.$nextTick(() => {
-                // แล้วจึงสั่งให้ DataTables ทำงาน
-                $("#personnelTable").DataTable({
-                  responsive: true, // เปิดใช้งาน Responsive
-                  // ตั้งค่าภาษาไทย
-                  language: {
-                    lengthMenu: "แสดง _MENU_ รายการ",
-                    zeroRecords: "ไม่พบข้อมูล",
-                    info: "แสดงหน้า _PAGE_ จาก _PAGES_",
-                    infoEmpty: "ไม่มีข้อมูล",
-                    infoFiltered: "(กรองจากทั้งหมด _MAX_ รายการ)",
-                    search: "ค้นหา:",
-                    paginate: {
-                      first: "หน้าแรก",
-                      last: "หน้าสุดท้าย",
-                      next: "ถัดไป",
-                      previous: "ก่อนหน้า",
-                    },
-                  },
-                });
-              });
-            },
-            users(newVal) {
-              if ($.fn.dataTable.isDataTable("#usersTable")) {
-                $("#usersTable").DataTable().destroy();
-              }
-              this.$nextTick(() => {
-                $("#usersTable").DataTable({
-                  responsive: true,
-                  language: {
-                    lengthMenu: "แสดง _MENU_ รายการ",
-                    zeroRecords: "ไม่พบข้อมูล",
-                    info: "แสดงหน้า _PAGE_ จาก _PAGES_",
-                    infoEmpty: "ไม่มีข้อมูล",
-                    infoFiltered: "(กรองจากทั้งหมด _MAX_ รายการ)",
-                    search: "ค้นหา:",
-                    paginate: {
-                      first: "หน้าแรก",
-                      last: "หน้าสุดท้าย",
-                      next: "ถัดไป",
-                      previous: "ก่อนหน้า",
-                    },
-                  },
-                });
-              });
-            },
           },
           methods: {
             async fetchPersonnel() {
               try {
+                // สร้าง URL พร้อม parameters
+                const params = new URLSearchParams({
+                  action: "read",
+                  page: this.currentPage,
+                  limit: this.itemsPerPage,
+                  search: this.personnelSearch,
+                  sortKey: this.sortKey,
+                  sortOrder: this.sortAsc ? "asc" : "desc",
+                });
+
                 const response = await axios.get(
-                  "api/personnel.php?action=read"
+                  `api/personnel.php?${params.toString()}`
                 );
+
                 if (response.data.success) {
                   this.personnelList = response.data.data;
+                  this.totalPersonnelRecords = response.data.totalRecords;
                 }
               } catch (error) {
-                Swal.fire("ผิดพลาด!", "ไม่สามารถดึงข้อมูลได้", "error");
+                console.error("Error fetching personnel:", error);
+                Swal.fire("ผิดพลาด", "ไม่สามารถดึงข้อมูลบุคลากรได้", "error");
               }
+            },
+            // เมื่อคลิกเรียงข้อมูล
+            sortBy(key) {
+              if (this.sortKey === key) {
+                this.sortAsc = !this.sortAsc;
+              } else {
+                this.sortKey = key;
+                this.sortAsc = true;
+              }
+              this.currentPage = 1; // กลับไปหน้าแรกเมื่อเรียงข้อมูล
+              this.fetchPersonnel(); // เรียก API ใหม่
+            },
+
+            // เมื่อเปลี่ยนหน้า
+            changePage(page) {
+              if (page >= 1 && page <= this.totalPages) {
+                this.currentPage = page;
+                this.fetchPersonnel(); // เรียก API ใหม่
+              }
+            },
+
+            // หลังจากการ Save หรือ Delete สำเร็จ
+            async onDataChanged() {
+              // หากหน้าปัจจุบันว่างลงหลังจากลบข้อมูล (เช่น ลบรายการสุดท้าย)
+              if (this.currentPage > 1 && this.personnelList.length === 1) {
+                this.currentPage--;
+              }
+              await this.fetchPersonnel();
             },
             openPreviewModal(person) {
               // คัดลอกข้อมูล person ที่เลือกมาใส่ใน selectedPersonnel
@@ -890,7 +1030,7 @@
               this.address.tambons = [];
               this.imageFile = null;
               this.$refs.fileInput.value = "";
-              this.imagePreview = "uploads/placeholder.png";
+              this.imagePreview = "https://placehold.co/400";
               if (personnel) {
                 this.currentPersonnel = { ...personnel };
                 this.imagePreview = "uploads/" + personnel.profile_image;
@@ -931,11 +1071,7 @@
                 if (response.data.success) {
                   Swal.fire("สำเร็จ!", response.data.message, "success");
                   this.personnelModal.hide();
-                  if (action === "create") {
-                    window.location.reload();
-                  } else {
-                    this.fetchPersonnel(); // โหลดข้อมูลใหม่เพื่ออัปเดตตาราง
-                  }
+                  this.onDataChanged();
                 } else {
                   Swal.fire(
                     "ผิดพลาด!",
@@ -965,7 +1101,7 @@
                     );
                     if (response.data.success) {
                       Swal.fire("ลบแล้ว!", "ข้อมูลถูกลบเรียบร้อย", "success");
-                      this.fetchPersonnel();
+                      this.onDataChanged();
                     } else {
                       Swal.fire("ผิดพลาด!", response.data.error, "error");
                     }
@@ -1042,16 +1178,51 @@
                   ? "uploads/" + this.currentPersonnel.profile_image
                   : "placeholder.png";
             },
+
             async fetchUsers() {
               try {
-                const response = await axios.get("api/users.php?action=read");
+                const params = new URLSearchParams({
+                  action: "read",
+                  page: this.userCurrentPage,
+                  limit: this.userItemsPerPage,
+                  search: this.userSearch,
+                  sortKey: this.userSortKey,
+                  sortOrder: this.userSortAsc ? "asc" : "desc",
+                });
+                const response = await axios.get(
+                  `api/users.php?${params.toString()}`
+                );
                 if (response.data.success) {
                   this.users = response.data.data;
+                  this.userTotalRecords = response.data.totalRecords;
                 }
               } catch (error) {
                 Swal.fire("ผิดพลาด", "ไม่สามารถดึงข้อมูลผู้ใช้งานได้", "error");
               }
             },
+            sortUsersBy(key) {
+              if (this.userSortKey === key) {
+                this.userSortAsc = !this.userSortAsc;
+              } else {
+                this.userSortKey = key;
+                this.userSortAsc = true;
+              }
+              this.userCurrentPage = 1;
+              this.fetchUsers();
+            },
+            changeUserPage(page) {
+              if (page >= 1 && page <= this.userTotalPages) {
+                this.userCurrentPage = page;
+                this.fetchUsers();
+              }
+            },
+            async onUserDataChanged() {
+              if (this.userCurrentPage > 1 && this.users.length === 1) {
+                this.userCurrentPage--;
+              }
+              await this.fetchUsers();
+            },
+
             openUserModal(user = null) {
               if (user) {
                 // สำหรับแก้ไข: ไม่เอา password มาแสดง
@@ -1086,11 +1257,7 @@
                 if (response.data.success) {
                   Swal.fire("สำเร็จ!", response.data.message, "success");
                   this.userModalInstance.hide();
-                  if (action === "create") {
-                    window.location.reload();
-                  } else {
-                    this.fetchUsers();
-                  }
+                  this.onUserDataChanged();
                 }
               } catch (error) {
                 const message =
@@ -1116,7 +1283,7 @@
                     );
                     if (response.data.success) {
                       Swal.fire("ลบแล้ว!", response.data.message, "success");
-                      this.fetchUsers();
+                      this.onUserDataChanged();
                     }
                   } catch (error) {
                     const message =

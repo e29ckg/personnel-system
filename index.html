@@ -267,11 +267,11 @@
             mountVueApp(sessionResponse.data.user);
           } else {
             // ถ้าไม่ login ให้ไปหน้า login
-            // window.location.href = "login.html";
+            window.location.href = "login.html";
           }
         } catch (error) {
           console.error("Session check failed:", error);
-          // window.location.href = "login.html";
+          window.location.href = "login.html";
         }
       })();
       function mountVueApp() {
@@ -284,36 +284,25 @@
               searched: false, // ใช้ติดตามว่าเคยค้นหาแล้วหรือยัง
               selectedPerson: null, // สำหรับเก็บข้อมูลคนที่จะพรีวิว
               publicPreviewModalInstance: null,
+              searchDebounce: null,
             };
           },
-          // watch: {
-          //   // Watcher สำหรับอัปเดต DataTable เมื่อข้อมูล results เปลี่ยน
-          //   results(newVal) {
-          //     if ($.fn.dataTable.isDataTable("#resultTable")) {
-          //       $("#resultTable").DataTable().destroy();
-          //     }
-          //     this.$nextTick(() => {
-          //       $("#resultTable").DataTable({
-          //         searching: false, // ปิดการค้นหาของ DataTable เพราะเราค้นหาเอง
-          //         lengthChange: false, // ปิดการเลือกจำนวนรายการ
-          //         pageLength: 10, // แสดงผล 10 รายการต่อหน้า
-          //         language: {
-          //           zeroRecords: "ไม่พบข้อมูลที่ตรงกับคำค้นหาของคุณ",
-          //           info: "แสดง _START_ ถึง _END_ จากทั้งหมด _TOTAL_ รายการ",
-          //           infoEmpty: "ไม่พบข้อมูล",
-          //           paginate: { next: "ถัดไป", previous: "ก่อนหน้า" },
-          //         },
-          //       });
-          //     });
-          //   },
-          // },
+          watch: {
+            searchTerm() {
+              clearTimeout(this.searchDebounce);
+              this.searchDebounce = setTimeout(() => {
+                this.performSearch();
+              }, 1000);
+            },
+          },
+
           methods: {
             openPublicPreviewModal(person) {
               this.selectedPerson = person;
               this.publicPreviewModalInstance.show();
             },
             async performSearch() {
-              this.searched = true; // ตั้งค่าว่าเคยค้นหาแล้ว เพื่อให้ card ผลลัพธ์แสดง
+              this.searched = true;
               if (this.searchTerm.trim() === "") {
                 this.results = [];
                 return;
@@ -329,7 +318,7 @@
 
               try {
                 const response = await axios.get(
-                  `api/public_search.php?term=${this.searchTerm}`
+                  `api/member_search.php?term=${this.searchTerm}`
                 );
                 if (response.data.success) {
                   this.results = response.data.data;
