@@ -50,7 +50,7 @@ try {
 
     $results = $stmt->fetchAll();
 
-    echo json_encode(['success' => true, 'data' => $results, 'term_hash' => $term_hash]);
+    echo json_encode(['success' => true, 'data' => $results]);
 
 } catch (PDOException $e) {
     http_response_code(500);
