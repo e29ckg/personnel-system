@@ -16,12 +16,30 @@
       rel="stylesheet"
       href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.css"
     /> -->
+    <style>
+      [v-cloak] {
+        display: none;
+      }
+    </style>
   </head>
   <body class="bg-light">
-    <div id="searchApp" class="container mt-4">
+    <div id="searchApp" class="container mt-4" v-cloak>
       <div class="d-flex justify-content-end mb-2">
-        <a href="login.html" class="btn btn-outline-secondary btn-sm">
-          <i class="fas fa-user-shield"></i> สำหรับผู้ดูแลระบบ
+        <a
+          v-if="user.role === 'admin'"
+          href="admin.html"
+          class="btn btn-outline-secondary btn-sm me-3"
+        >
+          <i class="fas fa-cogs"></i> กลับไปหน้า Admin
+        </a>
+
+        <span class="me-3" v-if="user.full_name">
+          <i class="fas fa-user"></i> ยินดีต้อนรับ,
+          <strong>{{ user.full_name }}</strong>
+        </span>
+
+        <a @click="handleLogout" href="#" class="btn btn-outline-danger btn-sm">
+          <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
         </a>
       </div>
       <div class="card shadow-sm">
@@ -239,81 +257,115 @@
 
     <script>
       const { createApp } = Vue;
-
-      createApp({
-        data() {
-          return {
-            searchTerm: "",
-            results: [],
-            searched: false, // ใช้ติดตามว่าเคยค้นหาแล้วหรือยัง
-            selectedPerson: null, // สำหรับเก็บข้อมูลคนที่จะพรีวิว
-            publicPreviewModalInstance: null,
-          };
-        },
-        // watch: {
-        //   // Watcher สำหรับอัปเดต DataTable เมื่อข้อมูล results เปลี่ยน
-        //   results(newVal) {
-        //     if ($.fn.dataTable.isDataTable("#resultTable")) {
-        //       $("#resultTable").DataTable().destroy();
-        //     }
-        //     this.$nextTick(() => {
-        //       $("#resultTable").DataTable({
-        //         searching: false, // ปิดการค้นหาของ DataTable เพราะเราค้นหาเอง
-        //         lengthChange: false, // ปิดการเลือกจำนวนรายการ
-        //         pageLength: 10, // แสดงผล 10 รายการต่อหน้า
-        //         language: {
-        //           zeroRecords: "ไม่พบข้อมูลที่ตรงกับคำค้นหาของคุณ",
-        //           info: "แสดง _START_ ถึง _END_ จากทั้งหมด _TOTAL_ รายการ",
-        //           infoEmpty: "ไม่พบข้อมูล",
-        //           paginate: { next: "ถัดไป", previous: "ก่อนหน้า" },
-        //         },
-        //       });
-        //     });
-        //   },
-        // },
-        methods: {
-          openPublicPreviewModal(person) {
-            this.selectedPerson = person;
-            this.publicPreviewModalInstance.show();
-          },
-          async performSearch() {
-            this.searched = true; // ตั้งค่าว่าเคยค้นหาแล้ว เพื่อให้ card ผลลัพธ์แสดง
-            if (this.searchTerm.trim() === "") {
-              this.results = [];
-              return;
-            }
-
-            Swal.fire({
-              title: "กำลังค้นหา...",
-              didOpen: () => {
-                Swal.showLoading();
-              },
-              allowOutsideClick: false,
-            });
-
-            try {
-              const response = await axios.get(
-                `api/public_search.php?term=${this.searchTerm}`
-              );
-              if (response.data.success) {
-                this.results = response.data.data;
-                Swal.close();
-              } else {
-                throw new Error("API returned an error.");
-              }
-            } catch (error) {
-              console.error("Search error:", error);
-              Swal.fire("ผิดพลาด!", "ไม่สามารถค้นหาข้อมูลได้ในขณะนี้", "error");
-            }
-          },
-        },
-        mounted() {
-          // สร้าง instance ของ Bootstrap Modal เตรียมไว้
-          this.publicPreviewModalInstance = new bootstrap.Modal(
-            document.getElementById("publicPreviewModal")
+      (async () => {
+        try {
+          const sessionResponse = await axios.get(
+            "api/auth.php?action=check_session"
           );
-        },
-      }).mount("#searchApp");
+          // ถ้า login สำเร็จ (ไม่ว่าจะ role ไหน) ให้สร้างแอป Vue
+          if (sessionResponse.data.success && sessionResponse.data.loggedIn) {
+            mountVueApp(sessionResponse.data.user);
+          } else {
+            // ถ้าไม่ login ให้ไปหน้า login
+            // window.location.href = "login.html";
+          }
+        } catch (error) {
+          console.error("Session check failed:", error);
+          // window.location.href = "login.html";
+        }
+      })();
+      function mountVueApp() {
+        createApp({
+          data() {
+            return {
+              user: JSON.parse(localStorage.getItem("loggedInUser")) || {},
+              searchTerm: "",
+              results: [],
+              searched: false, // ใช้ติดตามว่าเคยค้นหาแล้วหรือยัง
+              selectedPerson: null, // สำหรับเก็บข้อมูลคนที่จะพรีวิว
+              publicPreviewModalInstance: null,
+            };
+          },
+          // watch: {
+          //   // Watcher สำหรับอัปเดต DataTable เมื่อข้อมูล results เปลี่ยน
+          //   results(newVal) {
+          //     if ($.fn.dataTable.isDataTable("#resultTable")) {
+          //       $("#resultTable").DataTable().destroy();
+          //     }
+          //     this.$nextTick(() => {
+          //       $("#resultTable").DataTable({
+          //         searching: false, // ปิดการค้นหาของ DataTable เพราะเราค้นหาเอง
+          //         lengthChange: false, // ปิดการเลือกจำนวนรายการ
+          //         pageLength: 10, // แสดงผล 10 รายการต่อหน้า
+          //         language: {
+          //           zeroRecords: "ไม่พบข้อมูลที่ตรงกับคำค้นหาของคุณ",
+          //           info: "แสดง _START_ ถึง _END_ จากทั้งหมด _TOTAL_ รายการ",
+          //           infoEmpty: "ไม่พบข้อมูล",
+          //           paginate: { next: "ถัดไป", previous: "ก่อนหน้า" },
+          //         },
+          //       });
+          //     });
+          //   },
+          // },
+          methods: {
+            openPublicPreviewModal(person) {
+              this.selectedPerson = person;
+              this.publicPreviewModalInstance.show();
+            },
+            async performSearch() {
+              this.searched = true; // ตั้งค่าว่าเคยค้นหาแล้ว เพื่อให้ card ผลลัพธ์แสดง
+              if (this.searchTerm.trim() === "") {
+                this.results = [];
+                return;
+              }
+
+              Swal.fire({
+                title: "กำลังค้นหา...",
+                didOpen: () => {
+                  Swal.showLoading();
+                },
+                allowOutsideClick: false,
+              });
+
+              try {
+                const response = await axios.get(
+                  `api/public_search.php?term=${this.searchTerm}`
+                );
+                if (response.data.success) {
+                  this.results = response.data.data;
+                  Swal.close();
+                } else {
+                  throw new Error("API returned an error.");
+                }
+              } catch (error) {
+                console.error("Search error:", error);
+                Swal.fire(
+                  "ผิดพลาด!",
+                  "ไม่สามารถค้นหาข้อมูลได้ในขณะนี้",
+                  "error"
+                );
+              }
+            },
+            handleLogout() {
+              localStorage.removeItem("loggedInUser");
+              Swal.fire({
+                icon: "success",
+                title: "ออกจากระบบสำเร็จ",
+                showConfirmButton: false,
+                timer: 1000,
+              }).then(() => {
+                window.location.href = "logout.php";
+              });
+            },
+          },
+          mounted() {
+            // สร้าง instance ของ Bootstrap Modal เตรียมไว้
+            this.publicPreviewModalInstance = new bootstrap.Modal(
+              document.getElementById("publicPreviewModal")
+            );
+          },
+        }).mount("#searchApp");
+      }
     </script>
   </body>
 </html>

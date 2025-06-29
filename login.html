@@ -85,6 +85,11 @@
               });
 
               if (response.data.success) {
+                localStorage.setItem(
+                  "loggedInUser",
+                  JSON.stringify(response.data.user)
+                );
+
                 Swal.fire({
                   icon: "success",
                   title: "เข้าสู่ระบบสำเร็จ!",
@@ -92,7 +97,11 @@
                   showConfirmButton: false,
                   timer: 1500,
                 }).then(() => {
-                  window.location.href = "admin.html";
+                  if (response.data.user.role === "admin") {
+                    window.location.href = "admin.html";
+                  } else {
+                    window.location.href = "index.html";
+                  }
                 });
               }
             } catch (error) {

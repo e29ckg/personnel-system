@@ -22,31 +22,29 @@ if ($action === 'login') {
     }
 
     try {
-        // ค้นหาผู้ใช้จาก username ในฐานข้อมูล
-        $stmt = $pdo->prepare("SELECT id, username, password, full_name FROM users WHERE username = ?");
+        $stmt = $pdo->prepare("SELECT id, username, password, full_name, role FROM users WHERE username = ?");
         $stmt->execute([$username]);
         $user = $stmt->fetch();
 
-        // ตรวจสอบว่าเจอผู้ใช้ และรหัสผ่านถูกต้องหรือไม่
-        // ใช้ password_verify() เพื่อเปรียบเทียบรหัสผ่านที่ผู้ใช้กรอกกับ hash ในฐานข้อมูล
         if ($user && password_verify($password, $user['password'])) {
-            // ถ้ารหัสผ่านถูกต้อง สร้าง session
+            // เก็บ role ลง session
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['full_name'] = $user['full_name'];
+            $_SESSION['role'] = $user['role'];
 
-            // ส่งข้อมูลกลับไปให้ frontend
+            // ส่ง role กลับไปให้ frontend ด้วย
             echo json_encode([
                 'success' => true,
                 'message' => 'เข้าสู่ระบบสำเร็จ',
                 'user' => [
                     'id' => $user['id'],
                     'username' => $user['username'],
-                    'full_name' => $user['full_name']
+                    'full_name' => $user['full_name'],
+                    'role' => $user['role']
                 ]
             ]);
         } else {
-            // ถ้าไม่เจอผู้ใช้ หรือรหัสผ่านผิด
             http_response_code(401); // Unauthorized
             echo json_encode(['success' => false, 'message' => 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง']);
         }
@@ -64,7 +62,8 @@ if ($action === 'login') {
             'user' => [
                 'id' => $_SESSION['user_id'],
                 'username' => $_SESSION['username'],
-                'full_name' => $_SESSION['full_name']
+                'full_name' => $_SESSION['full_name'],
+                'role' => $_SESSION['role']
             ]
         ]);
     } else {

@@ -47,7 +47,7 @@
               ><i class="fas fa-user-circle"></i> ยินดีต้อนรับ,
               <strong>{{ user.full_name }}</strong></span
             >
-            <a href="logout.php" class="btn btn-danger"
+            <a @click="handleLogout" class="btn btn-danger"
               ><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</a
             >
           </div>
@@ -100,8 +100,7 @@
                 <thead class="table-dark">
                   <tr>
                     <th>รูปภาพ</th>
-                    <th>ยศ-ชื่อ-สกุล</th>
-                    <th>ตำแหน่ง</th>
+                    <th>คำนำหน้า-ชื่อ-สกุล/ตำแหน่ง</th>
                     <th>ที่อยู่</th>
                     <th>จัดการ</th>
                   </tr>
@@ -121,8 +120,10 @@
                         class="fas fa-user-circle fa-2x text-secondary"
                       ></i>
                     </td>
-                    <td>{{ p.rank }} {{ p.first_name }} {{ p.last_name }}</td>
-                    <td>{{ p.position }}</td>
+                    <td>
+                      <p>{{ p.rank }} {{ p.first_name }} {{ p.last_name }}</p>
+                      <span>{{ p.position }}</span>
+                    </td>
                     <td>
                       <template v-if="p.addr_houseno">
                         บ้านเลขที่ {{ p.addr_houseno }}
@@ -183,7 +184,7 @@
                   <tr>
                     <th>Username</th>
                     <th>ชื่อ-สกุล</th>
-                    <th>วันที่สร้าง</th>
+                    <th>สิทธิ์</th>
                     <th>จัดการ</th>
                   </tr>
                 </thead>
@@ -191,9 +192,7 @@
                   <tr v-for="u in users" :key="u.id">
                     <td>{{ u.username }}</td>
                     <td>{{ u.full_name }}</td>
-                    <td>
-                      {{ new Date(u.created_at).toLocaleDateString('th-TH') }}
-                    </td>
+                    <td>{{ u.role }}</td>
                     <td>
                       <button
                         class="btn btn-sm btn-warning"
@@ -650,6 +649,17 @@
                     กรอกรหัสผ่านใหม่เพื่อทำการเปลี่ยนแปลง
                   </div>
                 </div>
+                <div class="mb-3">
+                  <label class="form-label">Role</label>
+                  <select
+                    class="form-select"
+                    v-model="currentUser.role"
+                    required
+                  >
+                    <option value="member">Member</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
               </div>
               <div class="modal-footer">
                 <button
@@ -690,13 +700,14 @@
             "api/auth.php?action=check_session"
           );
 
-          // 2. ถ้า API ตอบกลับว่า login สำเร็จ
-          if (sessionResponse.data.success && sessionResponse.data.loggedIn) {
-            // 3. สร้างและเมาท์แอป Vue
+          if (
+            sessionResponse.data.success &&
+            sessionResponse.data.loggedIn &&
+            sessionResponse.data.user.role === "admin"
+          ) {
             mountVueApp(sessionResponse.data.user);
           } else {
-            // 4. ถ้ายังไม่ได้ login, แจ้งเตือนและส่งกลับไปหน้า login
-            handleNotLoggedIn();
+            window.location.href = "login.html";
           }
         } catch (error) {
           console.error("Session check failed:", error);
@@ -718,11 +729,12 @@
       }
 
       // --- ส่วนของแอปพลิเคชัน Vue ---
-      function mountVueApp(loggedInUser) {
+      function mountVueApp() {
         createApp({
           data() {
             return {
-              user: loggedInUser, // เก็บข้อมูลผู้ใช้ที่ login
+              // user: loggedInUser, // เก็บข้อมูลผู้ใช้ที่ login
+              user: JSON.parse(localStorage.getItem("loggedInUser")) || {},
               personnelList: [],
               currentPersonnel: {},
               personnelModal: null,
@@ -1048,6 +1060,7 @@
                   username: user.username,
                   full_name: user.full_name,
                   password: "",
+                  role: user.role,
                 };
               } else {
                 // สำหรับสร้างใหม่
@@ -1055,6 +1068,7 @@
                   username: "",
                   password: "",
                   full_name: "",
+                  role: "member",
                 };
               }
               this.userModalInstance.show();
@@ -1110,6 +1124,17 @@
                     Swal.fire("ผิดพลาด!", message, "error");
                   }
                 }
+              });
+            },
+            handleLogout() {
+              localStorage.removeItem("loggedInUser");
+              Swal.fire({
+                icon: "success",
+                title: "ออกจากระบบสำเร็จ",
+                showConfirmButton: false,
+                timer: 1000,
+              }).then(() => {
+                window.location.href = "logout.php";
               });
             },
           },
