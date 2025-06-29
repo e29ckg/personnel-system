@@ -14,7 +14,7 @@ if (empty($term)) {
     echo json_encode(['success' => true, 'data' => []]);
     exit;
 }
-
+$term_hash = hash('sha256', $term);
 $searchTerm = '%' . $term . '%';
 
 // ใช้เครื่องหมาย ? แทน :term
@@ -33,6 +33,7 @@ $sql = "
         OR last_name LIKE ?
         OR phone_number LIKE ?
         OR CONCAT_WS(' ', addr_houseno, addr_moo, addr_tambon, addr_amphoe, addr_changwat, addr_postalcode) LIKE ?
+        OR national_id_hash = ?
 ";
 
 try {
@@ -43,12 +44,13 @@ try {
         $searchTerm,
         $searchTerm,
         $searchTerm,
-        $searchTerm
+        $searchTerm,
+        $term_hash
     ]);
 
     $results = $stmt->fetchAll();
 
-    echo json_encode(['success' => true, 'data' => $results]);
+    echo json_encode(['success' => true, 'data' => $results, 'term_hash' => $term_hash]);
 
 } catch (PDOException $e) {
     http_response_code(500);
