@@ -1,6 +1,6 @@
 <?php
 header("Content-Type: application/json; charset=UTF-8");
-require 'db.php'; // ใช้ไฟล์เชื่อมต่อฐานข้อมูลเดิม
+require 'db.php';
 
 if (!isset($_SESSION['user_id'])) {
     http_response_code(403);
@@ -31,7 +31,6 @@ $sql = "
     WHERE
         first_name LIKE ?
         OR last_name LIKE ?
-        OR national_id LIKE ?
         OR phone_number LIKE ?
         OR CONCAT_WS(' ', addr_houseno, addr_moo, addr_tambon, addr_amphoe, addr_changwat, addr_postalcode) LIKE ?
 ";
@@ -41,7 +40,6 @@ try {
 
     // ส่งค่า $searchTerm เข้าไป 5 ครั้งให้ตรงกับจำนวน ?
     $stmt->execute([
-        $searchTerm,
         $searchTerm,
         $searchTerm,
         $searchTerm,

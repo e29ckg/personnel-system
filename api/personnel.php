@@ -1,5 +1,6 @@
 <?php
-require 'db.php'; // เรียกใช้ไฟล์เชื่อมต่อฐานข้อมูล
+require 'db.php';
+require_once 'config.php';
 
 // ================== ส่วนของการตรวจสอบสิทธิ์ ==================
 // ตรวจสอบว่าได้ Login แล้ว และมี role เป็น 'admin' เท่านั้น
@@ -7,6 +8,36 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role
     http_response_code(403); // Forbidden
     echo json_encode(['success' => false, 'error' => 'Unauthorized Access. Admin role required.']);
     exit;
+}
+
+function encrypt_data($data)
+{
+    $iv_length = openssl_cipher_iv_length(ENCRYPTION_CIPHER);
+    $iv = openssl_random_pseudo_bytes($iv_length);
+    $encrypted = openssl_encrypt($data, ENCRYPTION_CIPHER, ENCRYPTION_KEY, 0, $iv);
+    // รวม iv กับข้อมูลที่เข้ารหัสแล้ว เพื่อใช้ในการถอดรหัส
+    return base64_encode($iv . '::' . $encrypted);
+}
+
+function decrypt_data($data)
+{
+    // ตรวจสอบก่อนว่าข้อมูลมีตัวคั่น '::' หรือไม่
+    // ถ้าไม่มี แสดงว่าเป็นข้อมูลเก่าที่ยังไม่เข้ารหัส
+    if (strpos(base64_decode($data), '::') === false) {
+        return $data; // ส่งข้อมูลเดิมกลับไปเลย
+    }
+
+    // ถ้ามี '::' แสดงว่าเป็นข้อมูลที่เข้ารหัสแล้ว ให้ทำการถอดรหัสตามปกติ
+    // ใช้ @ เพื่อซ่อน Notice กรณีที่ข้อมูลผิดรูปแบบจริงๆ
+    @list($iv, $encrypted_data) = explode('::', base64_decode($data), 2);
+
+    // เพิ่มการตรวจสอบว่า $iv และ $encrypted_data ไม่ใช่ค่าว่าง
+    if ($iv && $encrypted_data) {
+        return openssl_decrypt($encrypted_data, ENCRYPTION_CIPHER, ENCRYPTION_KEY, 0, $iv);
+    }
+
+    // หากเกิดข้อผิดพลาดในการถอดรหัส ให้ส่งค่าว่างกลับไป
+    return '';
 }
 
 // รับค่า action จาก POST (สำหรับ create/update ที่มีไฟล์) หรือ GET (สำหรับ read)
@@ -106,6 +137,12 @@ try {
             $dataStmt->execute($params);
             $data = $dataStmt->fetchAll();
 
+            foreach ($data as $key => $row) {
+                if (!empty($row['national_id'])) {
+                    $data[$key]['national_id'] = decrypt_data($row['national_id']);
+                }
+            }
+
             // 6. ส่งข้อมูลกลับไปในรูปแบบใหม่ ที่มีทั้งข้อมูลและจำนวนทั้งหมด
             echo json_encode([
                 'success' => true,
@@ -134,7 +171,7 @@ try {
 
             // ส่งค่าจาก $_POST เข้าไปใน execute (ใช้ ?? null เพื่อป้องกัน error กรณีไม่มีค่า)
             $stmt->execute([
-                $_POST['national_id'] ?? null,
+                encrypt_data($_POST['national_id'] ?? null),
                 $_POST['rank'] ?? null,
                 $_POST['first_name'] ?? null,
                 $_POST['last_name'] ?? null,
@@ -202,7 +239,7 @@ try {
             $stmt = $pdo->prepare($sql);
 
             $stmt->execute([
-                $_POST['national_id'] ?? null,
+                encrypt_data($_POST['national_id'] ?? null),
                 $_POST['rank'] ?? null,
                 $_POST['first_name'] ?? null,
                 $_POST['last_name'] ?? null,
