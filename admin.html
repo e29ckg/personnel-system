@@ -3,7 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard - ระบบจัดการข้อมูลบุคลากร</title>
+    <title>Dashboard - ระบบจัดการข้อมูลผู้กำกับดูแล</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -12,7 +18,7 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     />
-
+    <link rel="stylesheet" href="assets/css/style.css" />
     <style>
       [v-cloak] {
         display: none;
@@ -55,7 +61,7 @@
               type="button"
               role="tab"
             >
-              <i class="fas fa-users"></i> จัดการข้อมูลบุคลากร
+              <i class="fas fa-users"></i> จัดการ ผู้กำกับดูแล
             </button>
           </li>
           <li class="nav-item" role="presentation">
@@ -109,7 +115,7 @@
                   <tr>
                     <th>รูปภาพ</th>
                     <th @click="sortBy('first_name')" style="cursor: pointer">
-                      ยศ-ชื่อ-สกุล
+                      ชื่อ-สกุล
                       <i
                         class="fas fa-sort"
                         v-if="sortKey !== 'first_name'"
@@ -154,8 +160,8 @@
                       ></i>
                     </td>
                     <td>
-                      {{ p.rank }} {{ p.first_name }} {{ p.last_name }} <br />
-                      <span>{{ p.position }}</span>
+                      {{ p.rank }}{{ p.first_name }} {{ p.last_name }} <br />
+                      <span class="badge bg-info">{{ p.position }}</span>
                     </td>
                     <td>
                       <template v-if="p.addr_houseno">
@@ -177,13 +183,13 @@
                     </td>
                     <td>
                       <button
-                        class="btn btn-sm btn-info"
+                        class="btn btn-sm btn-info me-1"
                         @click="openPreviewModal(p)"
                       >
                         <i class="fas fa-eye"></i> ดู
                       </button>
                       <button
-                        class="btn btn-sm btn-warning"
+                        class="btn btn-sm btn-warning me-1"
                         @click="openModal(p)"
                       >
                         <i class="fas fa-edit"></i> แก้ไข
@@ -202,10 +208,31 @@
                 class="d-flex justify-content-between align-items-center mt-3"
                 v-if="totalPages > 0"
               >
+                <div class="d-flex align-items-center">
+                  <label
+                    for="personnelItemsPerPageSelect"
+                    class="form-label me-2 mb-0"
+                    >แสดง:</label
+                  >
+                  <select
+                    id="personnelItemsPerPageSelect"
+                    class="form-select form-select-sm"
+                    style="width: auto"
+                    v-model="itemsPerPage"
+                  >
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                  </select>
+                  <span class="ms-2">รายการ</span>
+                </div>
+
                 <span
-                  >แสดงผล {{ personnelList.length }} จาก {{
-                  totalPersonnelRecords }} รายการ</span
+                  >หน้า {{ currentPage }} / {{ totalPages }} (ทั้งหมด {{
+                  totalPersonnelRecords }} รายการ)</span
                 >
+
                 <div>
                   <button
                     class="btn btn-outline-secondary btn-sm"
@@ -214,9 +241,6 @@
                   >
                     <i class="fas fa-chevron-left"></i> ก่อนหน้า
                   </button>
-                  <span class="mx-2"
-                    >หน้า {{ currentPage }} / {{ totalPages }}</span
-                  >
                   <button
                     class="btn btn-outline-secondary btn-sm"
                     @click="changePage(currentPage + 1)"
@@ -286,7 +310,7 @@
                     <td>{{ u.role }}</td>
                     <td>
                       <button
-                        class="btn btn-sm btn-warning"
+                        class="btn btn-sm btn-warning me-1"
                         @click="openUserModal(u)"
                       >
                         <i class="fas fa-edit"></i> แก้ไข
@@ -306,10 +330,29 @@
                 class="d-flex justify-content-between align-items-center mt-3"
                 v-if="userTotalPages > 0"
               >
+                <div class="d-flex align-items-center">
+                  <label for="itemsPerPageSelect" class="form-label me-2 mb-0"
+                    >แสดง:</label
+                  >
+                  <select
+                    id="itemsPerPageSelect"
+                    class="form-select form-select-sm"
+                    style="width: auto"
+                    v-model="userItemsPerPage"
+                  >
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                  </select>
+                  <span class="ms-2">รายการ</span>
+                </div>
+
                 <span
-                  >แสดงผล {{ users.length }} จาก {{ userTotalRecords }}
-                  รายการ</span
+                  >หน้า {{ userCurrentPage }} / {{ userTotalPages }} (ทั้งหมด {{
+                  userTotalRecords }} รายการ)</span
                 >
+
                 <div>
                   <button
                     class="btn btn-outline-secondary btn-sm"
@@ -318,9 +361,6 @@
                   >
                     <i class="fas fa-chevron-left"></i> ก่อนหน้า
                   </button>
-                  <span class="mx-2"
-                    >หน้า {{ userCurrentPage }} / {{ userTotalPages }}</span
-                  >
                   <button
                     class="btn btn-outline-secondary btn-sm"
                     @click="changeUserPage(userCurrentPage + 1)"
@@ -389,13 +429,15 @@
                       type="text"
                       class="form-control"
                       v-model="currentPersonnel.national_id"
+                      maxlength="17"
+                      placeholder="X-XXXX-XXXXX-XX-X"
                       required
                     />
                   </div>
                 </div>
                 <div class="row">
                   <div class="col-md-3 mb-3">
-                    <label class="form-label">ยศ</label>
+                    <label class="form-label">คำนำหน้าชื่อ</label>
                     <input
                       type="text"
                       class="form-control"
@@ -647,7 +689,7 @@
                     class="fas fa-user-circle fa-6x text-secondary mb-3"
                   ></i>
                   <h4>
-                    {{ selectedPersonnel.rank }} {{ selectedPersonnel.first_name
+                    {{ selectedPersonnel.rank }}{{ selectedPersonnel.first_name
                     }} {{ selectedPersonnel.last_name }}
                   </h4>
                   <p class="text-muted">{{ selectedPersonnel.position }}</p>
@@ -796,7 +838,6 @@
           </div>
         </div>
       </div>
-      {{totalPages}}
     </div>
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
@@ -904,12 +945,56 @@
                 this.fetchPersonnel();
               }, 500);
             },
+            itemsPerPage(newVal) {
+              this.currentPage = 1;
+              this.fetchPersonnel();
+            },
             userSearch(newVal) {
               clearTimeout(this.userSearchDebounce);
               this.userSearchDebounce = setTimeout(() => {
                 this.userCurrentPage = 1;
                 this.fetchUsers();
               }, 500);
+            },
+            userItemsPerPage(newVal) {
+              this.userCurrentPage = 1;
+              this.fetchUsers();
+            },
+            "currentPersonnel.national_id": function (newValue, oldValue) {
+              if (!newValue) return "";
+              const digits = newValue.replace(/\D/g, "");
+
+              let formattedId = digits;
+              if (digits.length > 1) {
+                formattedId = `${digits.slice(0, 1)}-${digits.slice(1)}`;
+              }
+              if (digits.length > 5) {
+                formattedId = `${digits.slice(0, 1)}-${digits.slice(
+                  1,
+                  5
+                )}-${digits.slice(5)}`;
+              }
+              if (digits.length > 10) {
+                formattedId = `${digits.slice(0, 1)}-${digits.slice(
+                  1,
+                  5
+                )}-${digits.slice(5, 10)}-${digits.slice(10)}`;
+              }
+              if (digits.length > 12) {
+                formattedId = `${digits.slice(0, 1)}-${digits.slice(
+                  1,
+                  5
+                )}-${digits.slice(5, 10)}-${digits.slice(
+                  10,
+                  12
+                )}-${digits.slice(12, 13)}`;
+              }
+
+              if (formattedId !== newValue) {
+                this.$nextTick(() => {
+                  this.currentPersonnel.national_id = formattedId;
+                });
+              }
             },
             // เมื่อมีการเลือกจังหวัด
             "selected.province_id"(newId, oldId) {
