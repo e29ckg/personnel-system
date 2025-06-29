@@ -1,5 +1,5 @@
 <?php
-require 'db.php'; // ใช้ไฟล์เชื่อมต่อฐานข้อมูลเดิม
+require 'db.php';
 
 $action = $_GET['action'] ?? '';
 

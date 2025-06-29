@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 28, 2025 at 06:35 PM
+-- Generation Time: Jun 29, 2025 at 03:39 PM
 -- Server version: 10.4.24-MariaDB
 -- PHP Version: 7.4.28
 
@@ -18,10 +18,8 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `supervisor`
+-- Database: `personnel_db`
 --
-CREATE DATABASE IF NOT EXISTS `supervisor` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-USE `supervisor`;
 
 -- --------------------------------------------------------
 
@@ -29,10 +27,10 @@ USE `supervisor`;
 -- Table structure for table `personnel`
 --
 
-DROP TABLE IF EXISTS `personnel`;
 CREATE TABLE `personnel` (
   `id` int(11) NOT NULL,
-  `national_id` varchar(20) NOT NULL,
+  `national_id` varchar(255) NOT NULL,
+  `national_id_hash` varchar(64) DEFAULT NULL COMMENT 'SHA-256 hash of National ID for searching',
   `rank` varchar(50) DEFAULT NULL,
   `first_name` varchar(100) NOT NULL,
   `last_name` varchar(100) NOT NULL,
@@ -48,11 +46,6 @@ CREATE TABLE `personnel` (
   `addr_amphoe` varchar(100) DEFAULT NULL COMMENT 'อำเภอ/เขต',
   `addr_changwat` varchar(100) DEFAULT NULL COMMENT 'จังหวัด',
   `addr_postalcode` varchar(5) DEFAULT NULL COMMENT 'รหัสไปรษณีย์',
-  `address_number` varchar(255) DEFAULT NULL,
-  `address_subdistrict` varchar(100) DEFAULT NULL,
-  `address_district` varchar(100) DEFAULT NULL,
-  `address_province` varchar(100) DEFAULT NULL,
-  `address_postal_code` varchar(5) DEFAULT NULL,
   `appointment_unit` varchar(255) DEFAULT NULL,
   `appointment_order` varchar(100) DEFAULT NULL,
   `appointment_date` date DEFAULT NULL,
@@ -70,12 +63,8 @@ CREATE TABLE `personnel` (
 -- Dumping data for table `personnel`
 --
 
-INSERT INTO `personnel` (`id`, `national_id`, `rank`, `first_name`, `last_name`, `position`, `position_number`, `salary_rate`, `date_of_birth`, `education`, `phone_number`, `addr_houseno`, `addr_moo`, `addr_tambon`, `addr_amphoe`, `addr_changwat`, `addr_postalcode`, `address_number`, `address_subdistrict`, `address_district`, `address_province`, `address_postal_code`, `appointment_unit`, `appointment_order`, `appointment_date`, `position_start_date`, `position_end_date`, `term_years`, `retirement_year`, `remarks`, `profile_image`, `created_at`, `updated_at`) VALUES
-(2, '0000', 'นาย', 'พเยาว์', 'สนพลาย', 'เจ้าหน้าที่ธุรการ', NULL, NULL, '2025-06-27', 'ปริญญาตรี', 'สสส', '205', '16', 'ท่าลาด', 'เรณูนคร', 'นครพนม', '48170', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 4, NULL, NULL, 'personnel_685ff1de6033d5.23447120_cyber.png', '2025-06-28 05:01:14', '2025-06-28 14:19:46'),
-(3, '1235567890-', 'นาย', 'ทดสอบ', 'ไทย', 'นายสิบการเงิน', NULL, NULL, '2025-06-27', 'มัธยมศึกษาปีที่ 6', NULL, NULL, NULL, 'ไร่ใหม่', 'สามร้อยยอด', 'ประจวบคีรีขันธ์', '77180', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'personnel_685fed0276c3c9.11570388_332362.jpg', '2025-06-28 13:24:18', '2025-06-28 13:24:18'),
-(4, 'qqq', 'qq', 'qq', 'qq', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-06-28 13:45:44', '2025-06-28 13:45:44'),
-(5, 'ไไ', 'ไไ', 'ไไ', 'ไไ', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'personnel_685ff6b8642d48.31836179_ประสานความร่วมมือ 67.pdf (พรีเซนเทชั่น).png', '2025-06-28 14:04:53', '2025-06-28 14:05:44'),
-(6, 'r', 'r', 'rrr', 'r', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'personnel_685ff863c604d5.07171959_ป้ายชำระค่าธรรมเนียมศาล.jpg', '2025-06-28 14:12:31', '2025-06-28 14:12:51');
+INSERT INTO `personnel` (`id`, `national_id`, `national_id_hash`, `rank`, `first_name`, `last_name`, `position`, `position_number`, `salary_rate`, `date_of_birth`, `education`, `phone_number`, `addr_houseno`, `addr_moo`, `addr_tambon`, `addr_amphoe`, `addr_changwat`, `addr_postalcode`, `appointment_unit`, `appointment_order`, `appointment_date`, `position_start_date`, `position_end_date`, `term_years`, `retirement_year`, `remarks`, `profile_image`, `created_at`, `updated_at`) VALUES
+(2, 'xDzTI2SnDEkOQzSN5vNlBDo6amVuc3FzbFdYRmw3VHIycXNQWHphbHdzcjQ4RkxDdXB6anRKVWt2aUhXdz0=', '664507a78495f1975019158003e84599828a79103ebf34cbd8b958fbc38ecaed', 'นาย', 'พเยาว์', 'สนพลาย', 'กำนัน', NULL, NULL, '2025-06-27', 'ปริญญาตรี', 'สสส', '205', '16', 'ท่าลาด', 'เรณูนคร', 'นครพนม', '48170', NULL, NULL, NULL, NULL, NULL, 60, NULL, NULL, 'personnel_6861264f8435f4.42526996_magnifying-glass_12549583.png', '2025-06-28 05:01:14', '2025-06-29 13:36:53');
 
 -- --------------------------------------------------------
 
@@ -83,7 +72,6 @@ INSERT INTO `personnel` (`id`, `national_id`, `rank`, `first_name`, `last_name`,
 -- Table structure for table `thai_amphures`
 --
 
-DROP TABLE IF EXISTS `thai_amphures`;
 CREATE TABLE `thai_amphures` (
   `id` int(11) NOT NULL,
   `name_th` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -1036,7 +1024,6 @@ INSERT INTO `thai_amphures` (`id`, `name_th`, `name_en`, `province_id`, `created
 -- Table structure for table `thai_provinces`
 --
 
-DROP TABLE IF EXISTS `thai_provinces`;
 CREATE TABLE `thai_provinces` (
   `id` int(11) NOT NULL,
   `name_th` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -1136,7 +1123,6 @@ INSERT INTO `thai_provinces` (`id`, `name_th`, `name_en`, `geography_id`, `creat
 -- Table structure for table `thai_tambons`
 --
 
-DROP TABLE IF EXISTS `thai_tambons`;
 CREATE TABLE `thai_tambons` (
   `id` int(11) NOT NULL,
   `zip_code` int(11) NOT NULL,
@@ -8651,12 +8637,12 @@ INSERT INTO `thai_tambons` (`id`, `zip_code`, `name_th`, `name_en`, `amphure_id`
 -- Table structure for table `users`
 --
 
-DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
   `id` int(11) NOT NULL,
   `username` varchar(50) NOT NULL,
   `password` varchar(255) NOT NULL,
   `full_name` varchar(100) DEFAULT NULL,
+  `role` enum('admin','member') NOT NULL DEFAULT 'member',
   `created_at` timestamp NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -8664,10 +8650,9 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `username`, `password`, `full_name`, `created_at`) VALUES
-(1, 'admin', '$2y$10$oQDlONUFVC8OBlNY.VH.suTPFxb6LBfC5rTowySg0DPQHCiyjF8g6', 'Admin', '2025-06-28 02:55:08'),
-(2, 'user', '$2y$10$tZjn2jTP0taHY/.WhEjaRuSeAOTrlBiFtPKGh.Px8AcOndyYF3TqK', 'okp', '2025-06-28 16:21:12'),
-(3, 'user2', '$2y$10$Z/22LQI4YVRQg5QhBOugyOV9xeEB1wxWuHhPXJab8W/rlPzfnJZLu', 'user2', '2025-06-28 16:23:54');
+INSERT INTO `users` (`id`, `username`, `password`, `full_name`, `role`, `created_at`) VALUES
+(1, 'admin', '$2y$10$oQDlONUFVC8OBlNY.VH.suTPFxb6LBfC5rTowySg0DPQHCiyjF8g6', 'Admin', 'admin', '2025-06-28 02:55:08'),
+(2, 'user', '$2y$10$tZjn2jTP0taHY/.WhEjaRuSeAOTrlBiFtPKGh.Px8AcOndyYF3TqK', 'okp', 'member', '2025-06-28 16:21:12');
 
 --
 -- Indexes for dumped tables
@@ -8678,7 +8663,8 @@ INSERT INTO `users` (`id`, `username`, `password`, `full_name`, `created_at`) VA
 --
 ALTER TABLE `personnel`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `national_id` (`national_id`);
+  ADD UNIQUE KEY `national_id` (`national_id`),
+  ADD KEY `idx_nid_hash` (`national_id_hash`);
 
 --
 -- Indexes for table `thai_amphures`
@@ -8713,13 +8699,13 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `personnel`
 --
 ALTER TABLE `personnel`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

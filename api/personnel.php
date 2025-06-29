@@ -21,28 +21,22 @@ function encrypt_data($data)
 
 function decrypt_data($data)
 {
-    // ตรวจสอบก่อนว่าข้อมูลมีตัวคั่น '::' หรือไม่
-    // ถ้าไม่มี แสดงว่าเป็นข้อมูลเก่าที่ยังไม่เข้ารหัส
     if (strpos(base64_decode($data), '::') === false) {
         return $data; // ส่งข้อมูลเดิมกลับไปเลย
     }
 
-    // ถ้ามี '::' แสดงว่าเป็นข้อมูลที่เข้ารหัสแล้ว ให้ทำการถอดรหัสตามปกติ
-    // ใช้ @ เพื่อซ่อน Notice กรณีที่ข้อมูลผิดรูปแบบจริงๆ
     @list($iv, $encrypted_data) = explode('::', base64_decode($data), 2);
 
-    // เพิ่มการตรวจสอบว่า $iv และ $encrypted_data ไม่ใช่ค่าว่าง
     if ($iv && $encrypted_data) {
         return openssl_decrypt($encrypted_data, ENCRYPTION_CIPHER, ENCRYPTION_KEY, 0, $iv);
     }
 
-    // หากเกิดข้อผิดพลาดในการถอดรหัส ให้ส่งค่าว่างกลับไป
     return '';
 }
 
 // รับค่า action จาก POST (สำหรับ create/update ที่มีไฟล์) หรือ GET (สำหรับ read)
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
-$uploadDir = '../uploads/'; // ระบุตำแหน่งโฟลเดอร์สำหรับอัปโหลดไฟล์ (จาก api/ ไปที่ uploads/)
+$uploadDir = '../uploads/';
 
 // ================== ฟังก์ชันเสริม ==================
 
@@ -89,39 +83,31 @@ try {
          * ====================================================================
          */
         case 'read':
-            // 1. รับค่า Parameters จาก Frontend
             $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
             $limit = isset($_GET['limit']) ? (int) $_GET['limit'] : 10;
             $search = $_GET['search'] ?? '';
             $sortKey = $_GET['sortKey'] ?? 'id';
             $sortOrder = isset($_GET['sortOrder']) && strtolower($_GET['sortOrder']) === 'asc' ? 'ASC' : 'DESC';
 
-            // 2. ป้องกัน SQL Injection สำหรับการเรียงข้อมูล
-            // สร้าง Whitelist ของคอลัมน์ที่อนุญาตให้เรียงข้อมูลได้
             $allowedSortKeys = ['id', 'first_name', 'position', 'age'];
             if (!in_array($sortKey, $allowedSortKeys)) {
                 $sortKey = 'id'; // ถ้าส่งคอลัมน์แปลกๆ มา ให้ใช้ id เป็น default
             }
 
-            // 3. สร้าง Query สำหรับการค้นหา (WHERE clause)
             $whereClauses = [];
             $params = [];
             if (!empty($search)) {
                 $searchTerm = '%' . $search . '%';
-                // เพิ่มเงื่อนไขการค้นหา
                 $whereClauses[] = "(first_name LIKE ? OR last_name LIKE ? OR position LIKE ?)";
-                // เพิ่ม parameter สำหรับ bind
                 array_push($params, $searchTerm, $searchTerm, $searchTerm);
             }
             $whereSql = count($whereClauses) > 0 ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
 
-            // 4. Query เพื่อนับจำนวนข้อมูลทั้งหมด (สำหรับคำนวณหน้า)
             $countSql = "SELECT COUNT(id) FROM personnel " . $whereSql;
             $countStmt = $pdo->prepare($countSql);
             $countStmt->execute($params);
             $totalRecords = $countStmt->fetchColumn();
 
-            // 5. Query เพื่อดึงข้อมูลเฉพาะหน้าที่ต้องการ
             $offset = ($page - 1) * $limit;
             $dataSql = "
                 SELECT 
@@ -143,7 +129,6 @@ try {
                 }
             }
 
-            // 6. ส่งข้อมูลกลับไปในรูปแบบใหม่ ที่มีทั้งข้อมูลและจำนวนทั้งหมด
             echo json_encode([
                 'success' => true,
                 'data' => $data,
@@ -154,10 +139,8 @@ try {
          * สร้างข้อมูลบุคลากรใหม่
          */
         case 'create':
-            // จัดการไฟล์รูปภาพก่อน
             $imageFileName = handleFileUpload($_FILES['profile_image'] ?? null, $uploadDir);
 
-            // เตรียมคำสั่ง SQL (ใช้เครื่องหมาย ? เพื่อความปลอดภัย)
             $sql = "INSERT INTO personnel (
                         national_id, national_id_hash `rank`, first_name, last_name, position, position_number, 
                         salary_rate, date_of_birth, education, phone_number, 
@@ -169,7 +152,6 @@ try {
 
             $stmt = $pdo->prepare($sql);
 
-            // ส่งค่าจาก $_POST เข้าไปใน execute (ใช้ ?? null เพื่อป้องกัน error กรณีไม่มีค่า)
             $stmt->execute([
                 encrypt_data($_POST['national_id'] ?? null),
                 hash('sha256', $_POST['national_id'] ?? ''),
@@ -213,13 +195,11 @@ try {
                 exit;
             }
 
-            // ดึงชื่อไฟล์รูปเก่าจากฐานข้อมูล
             $stmt = $pdo->prepare("SELECT profile_image FROM personnel WHERE id = ?");
             $stmt->execute([$id]);
             $oldImage = $stmt->fetchColumn();
             $imageFileName = $oldImage; // กำหนดให้ใช้รูปเก่าเป็นค่าเริ่มต้น
 
-            // ถ้ามีการอัปโหลดไฟล์ใหม่เข้ามา
             if (isset($_FILES['profile_image'])) {
                 $newImageFileName = handleFileUpload($_FILES['profile_image'], $uploadDir);
                 if ($newImageFileName) {
@@ -276,7 +256,6 @@ try {
          * ลบข้อมูลบุคลากร
          */
         case 'delete':
-            // การลบรับค่าเป็น JSON เพราะส่งมาแค่ ID
             $input = json_decode(file_get_contents('php://input'), true);
             $id = $input['id'] ?? null;
             if (!$id) {
@@ -285,13 +264,11 @@ try {
                 exit;
             }
 
-            // ดึงชื่อไฟล์รูปแล้วลบไฟล์ออกจากเซิร์ฟเวอร์ก่อน
             $stmt = $pdo->prepare("SELECT profile_image FROM personnel WHERE id = ?");
             $stmt->execute([$id]);
             $imageToDelete = $stmt->fetchColumn();
             deleteOldFile($imageToDelete, $uploadDir);
 
-            // ลบข้อมูลออกจากฐานข้อมูล
             $stmt = $pdo->prepare("DELETE FROM personnel WHERE id = ?");
             $stmt->execute([$id]);
 
@@ -305,6 +282,5 @@ try {
     }
 } catch (PDOException $e) {
     http_response_code(500);
-    // ใน Production จริง ไม่ควรแสดง error message ให้ user เห็น
     echo json_encode(['success' => false, 'error' => 'Database error: ' . $e->getMessage()]);
 }

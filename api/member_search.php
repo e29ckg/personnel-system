@@ -39,7 +39,6 @@ $sql = "
 try {
     $stmt = $pdo->prepare($sql);
 
-    // ส่งค่า $searchTerm เข้าไป 5 ครั้งให้ตรงกับจำนวน ?
     $stmt->execute([
         $searchTerm,
         $searchTerm,
