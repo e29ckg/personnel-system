@@ -98,10 +98,16 @@
                   />
                 </div>
               </div>
-              <div class="col-md-6 text-end">
-                <button class="btn btn-primary" @click="openModal()">
-                  <i class="fas fa-plus"></i> เพิ่มข้อมูลใหม่
-                </button>
+              <div class="row mb-3">
+                <div class="col-md-6"></div>
+                <div class="col-md-6 text-end">
+                  <button class="btn btn-success me-2" @click="openImportModal">
+                    <i class="fas fa-file-excel"></i> Import from Excel
+                  </button>
+                  <button class="btn btn-primary" @click="openModal()">
+                    <i class="fas fa-plus"></i> เพิ่มข้อมูลใหม่
+                  </button>
+                </div>
               </div>
             </div>
             <div class="table-responsive">
@@ -841,6 +847,60 @@
           </div>
         </div>
       </div>
+      <div class="modal fade" id="importModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">นำเข้าข้อมูลจาก Excel</h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <div class="alert alert-warning">
+                <strong>คำแนะนำ:</strong> ไฟล์ Excel ควรมีคอลัมน์ตรงกับตัวอย่าง
+                และข้อมูลควรเริ่มที่แถวที่ 2 (แถวแรกคือหัวข้อ)
+              </div>
+              <form @submit.prevent="uploadAndImport">
+                <div class="mb-3">
+                  <label for="excelFile" class="form-label"
+                    >เลือกไฟล์ Excel (.xlsx, .xls)</label
+                  >
+                  <input
+                    class="form-control"
+                    type="file"
+                    id="excelFile"
+                    @change="handleFileSelect"
+                    accept=".xlsx, .xls"
+                    required
+                  />
+                </div>
+                <div v-if="importFile" class="mb-3">
+                  <p>ไฟล์ที่เลือก: <strong>{{ importFile.name }}</strong></p>
+                </div>
+                <div class="modal-footer">
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal"
+                  >
+                    ยกเลิก
+                  </button>
+                  <button
+                    type="submit"
+                    class="btn btn-primary"
+                    :disabled="!importFile"
+                  >
+                    <i class="fas fa-upload"></i> อัปโหลดและประมวลผล
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
@@ -928,6 +988,8 @@
               userCurrentPage: 1,
               userItemsPerPage: 10,
               userSearchDebounce: null,
+              importModalInstance: null,
+              importFile: null,
 
               tapMenu: "personnelTab", //  personnelTab / usersTab
             };
@@ -1394,6 +1456,49 @@
                 window.location.href = "logout.php";
               });
             },
+            openImportModal() {
+              this.importFile = null;
+              document.getElementById("excelFile").value = ""; // เคลียร์ไฟล์เก่า
+              this.importModalInstance.show();
+            },
+            handleFileSelect(event) {
+              this.importFile = event.target.files[0];
+            },
+            async uploadAndImport() {
+              if (!this.importFile) return;
+
+              const formData = new FormData();
+              formData.append("excel_file", this.importFile);
+
+              Swal.fire({
+                title: "กำลังประมวลผลไฟล์...",
+                text: "กรุณารอสักครู่ ระบบกำลังนำเข้าข้อมูล",
+                allowOutsideClick: false,
+                didOpen: () => {
+                  Swal.showLoading();
+                },
+              });
+
+              try {
+                const response = await axios.post("api/import.php", formData, {
+                  headers: { "Content-Type": "multipart/form-data" },
+                });
+
+                if (response.data.success) {
+                  Swal.fire({
+                    icon: "success",
+                    title: "นำเข้าข้อมูลสำเร็จ!",
+                    html: `นำเข้า: <strong>${response.data.imported}</strong> รายการ<br>ข้ามรายการที่ซ้ำ: <strong>${response.data.skipped}</strong> รายการ`,
+                  });
+                  this.importModalInstance.hide();
+                  this.fetchPersonnel(); // โหลดข้อมูลบุคลากรใหม่
+                }
+              } catch (error) {
+                const message =
+                  error.response?.data?.error || "เกิดข้อผิดพลาดร้ายแรง";
+                Swal.fire("ผิดพลาด!", message, "error");
+              }
+            },
           },
           mounted() {
             this.fetchPersonnel();
@@ -1408,6 +1513,9 @@
 
             this.userModalInstance = new bootstrap.Modal(
               document.getElementById("userModal")
+            );
+            this.importModalInstance = new bootstrap.Modal(
+              document.getElementById("importModal")
             );
           },
         }).mount("#app");
