@@ -116,12 +116,13 @@
                     <span>
                       {{ person.addr_houseno ? `เลขที่ ${person.addr_houseno} `
                       : '' }} {{ person.addr_moo ? ` หมู่ ${person.addr_moo} ` :
-                      '' }}{{ person.addr_tambon ? ` ต.${person.addr_tambon} ` :
-                      '' }}{{ person.addr_amphoe ? ` อ.${person.addr_amphoe} ` :
-                      '' }} {{ person.addr_changwat ? `
-                      จ.${person.addr_changwat} ` : '' }} {{
-                      person.addr_postalcode ? `${person.addr_postalcode}` : ''
-                      }}
+                      '' }}{{ person.addr_villagename ? `
+                      หมู่บ้าน${person.addr_villagename} ` : '' }}{{
+                      person.addr_tambon ? ` ต.${person.addr_tambon} ` : '' }}{{
+                      person.addr_amphoe ? ` อ.${person.addr_amphoe} ` : '' }}
+                      {{ person.addr_changwat ? ` จ.${person.addr_changwat} ` :
+                      '' }} {{ person.addr_postalcode ?
+                      `${person.addr_postalcode}` : '' }}
                     </span>
                   </td>
                   <td>{{ person.phone_number }}</td>
@@ -194,6 +195,8 @@
                         ${selectedPerson.addr_houseno} ` : '' }} {{
                         selectedPerson.addr_moo ? ` หมู่
                         ${selectedPerson.addr_moo} ` : '' }}{{
+                        selectedPerson.addr_villagename ? `
+                        หมู่บ้าน${selectedPerson.addr_villagename } ` : '' }}{{
                         selectedPerson.addr_tambon ? `
                         ต.${selectedPerson.addr_tambon} ` : '' }}{{
                         selectedPerson.addr_amphoe ? `

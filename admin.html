@@ -102,7 +102,7 @@
                 <div class="col-md-6"></div>
                 <div class="col-md-6 text-end">
                   <button class="btn btn-success me-2" @click="openImportModal">
-                    <i class="fas fa-file-excel"></i> Import from Excel
+                    <i class="fas fa-file-excel"></i> Import from csv
                   </button>
                   <button class="btn btn-primary" @click="openModal()">
                     <i class="fas fa-plus"></i> เพิ่มข้อมูลใหม่
@@ -174,6 +174,9 @@
                       </template>
                       <template v-if="p.addr_moo">
                         หมู่ {{ p.addr_moo }}
+                      </template>
+                      <template v-if="p.addr_villagename ">
+                        หมู่บ้าน{{ p.addr_villagename }}
                       </template>
                       <template v-if="p.addr_tambon">
                         ต.{{ p.addr_tambon }}
@@ -522,7 +525,7 @@
                   </div>
 
                   <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
                       <label class="form-label">บ้านเลขที่</label>
                       <input
                         type="text"
@@ -530,12 +533,20 @@
                         v-model="currentPersonnel.addr_houseno"
                       />
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
                       <label class="form-label">หมู่ที่</label>
                       <input
                         type="text"
                         class="form-control"
                         v-model="currentPersonnel.addr_moo"
+                      />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label">ชื่อหมู่บ้าน</label>
+                      <input
+                        type="text"
+                        class="form-control"
+                        v-model="currentPersonnel.addr_villagename"
                       />
                     </div>
                   </div>
@@ -747,6 +758,9 @@
                     <template v-if="selectedPersonnel.addr_moo">
                       หมู่ {{ selectedPersonnel.addr_moo }}
                     </template>
+                    <template v-if="selectedPersonnel.addr_villagename ">
+                      หมู่บ้าน{{ selectedPersonnel.addr_villagename }}
+                    </template>
                     <template v-if="selectedPersonnel.addr_tambon">
                       ต.{{ selectedPersonnel.addr_tambon }}
                     </template>
@@ -851,7 +865,7 @@
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">นำเข้าข้อมูลจาก Excel</h5>
+              <h5 class="modal-title">นำเข้าข้อมูลจาก csv</h5>
               <button
                 type="button"
                 class="btn-close"
@@ -860,20 +874,20 @@
             </div>
             <div class="modal-body">
               <div class="alert alert-warning">
-                <strong>คำแนะนำ:</strong> ไฟล์ Excel ควรมีคอลัมน์ตรงกับตัวอย่าง
+                <strong>คำแนะนำ:</strong> ไฟล์ CSV ควรมีคอลัมน์ตรงกับตัวอย่าง
                 และข้อมูลควรเริ่มที่แถวที่ 2 (แถวแรกคือหัวข้อ)
               </div>
               <form @submit.prevent="uploadAndImport">
                 <div class="mb-3">
                   <label for="excelFile" class="form-label"
-                    >เลือกไฟล์ Excel (.xlsx, .xls)</label
+                    >เลือกไฟล์ csv (.csv)</label
                   >
                   <input
                     class="form-control"
                     type="file"
                     id="excelFile"
                     @change="handleFileSelect"
-                    accept=".xlsx, .xls"
+                    accept=".csv"
                     required
                   />
                 </div>

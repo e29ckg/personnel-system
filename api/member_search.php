@@ -22,7 +22,7 @@ $sql = "
     SELECT 
         id, `rank`, first_name, last_name, position, position_number,
         salary_rate, date_of_birth, education, phone_number,
-        addr_houseno, addr_moo, addr_tambon, addr_amphoe, addr_changwat, addr_postalcode,
+        addr_houseno, addr_moo, addr_villagename, addr_tambon, addr_amphoe, addr_changwat, addr_postalcode,
         appointment_unit, appointment_order, appointment_date,
         position_start_date, position_end_date, term_years,
         retirement_year, remarks, profile_image
@@ -32,7 +32,7 @@ $sql = "
         first_name LIKE ?
         OR last_name LIKE ?
         OR phone_number LIKE ?
-        OR CONCAT_WS(' ', addr_houseno, addr_moo, addr_tambon, addr_amphoe, addr_changwat, addr_postalcode) LIKE ?
+        OR CONCAT_WS(' ', addr_houseno, addr_moo, addr_villagename, addr_tambon, addr_amphoe, addr_changwat, addr_postalcode) LIKE ?
         OR national_id_hash = ?
 ";
 
