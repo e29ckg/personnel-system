@@ -75,6 +75,19 @@
               <i class="fas fa-user-cog"></i> จัดการผู้ใช้งาน
             </button>
           </li>
+          <li class="nav-item" role="presentation">
+            <button
+              class="nav-link"
+              id="logs-tab"
+              data-bs-toggle="tab"
+              data-bs-target="#logs-tab-pane"
+              type="button"
+              role="tab"
+              @click="fetchLogs"
+            >
+              <i class="fas fa-history"></i> ประวัติการใช้งาน
+            </button>
+          </li>
         </ul>
 
         <div class="tab-content" id="adminTabContent">
@@ -382,6 +395,37 @@
                   </button>
                 </div>
               </nav>
+            </div>
+          </div>
+
+          <div class="tab-pane fade" id="logs-tab-pane" role="tabpanel">
+            <div class="table-responsive">
+              <table class="table table-sm table-striped table-bordered">
+                <thead class="table-dark">
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Username</th>
+                    <th>Action</th>
+                    <th>Target ID</th>
+                    <th>Details</th>
+                    <th>IP Address</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="log in logs" :key="log.id">
+                    <td>
+                      {{ new Date(log.timestamp).toLocaleString('th-TH') }}
+                    </td>
+                    <td>{{ log.username }}</td>
+                    <td>
+                      <span class="badge bg-secondary">{{ log.action }}</span>
+                    </td>
+                    <td>{{ log.target_id }}</td>
+                    <td>{{ log.details }}</td>
+                    <td>{{ log.ip_address }}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -995,6 +1039,7 @@
               importFile: null,
 
               tapMenu: "personnelTab", //  personnelTab / usersTab
+              logs: [],
             };
           },
           computed: {
@@ -1137,6 +1182,31 @@
                 if (response.data.success) {
                   this.personnelList = response.data.data;
                   this.totalPersonnelRecords = response.data.totalRecords;
+                }
+              } catch (error) {
+                console.error("Error fetching personnel:", error);
+                Swal.fire("ผิดพลาด", "ไม่สามารถดึงข้อมูลบุคลากรได้", "error");
+              }
+            },
+            async fetchLogs() {
+              try {
+                // สร้าง URL พร้อม parameters
+                const params = new URLSearchParams({
+                  action: "read",
+                  page: this.currentPage,
+                  limit: this.itemsPerPage,
+                  search: this.personnelSearch,
+                  sortKey: this.sortKey,
+                  sortOrder: this.sortAsc ? "asc" : "desc",
+                });
+
+                const response = await axios.get(
+                  `api/logs.php?${params.toString()}`
+                );
+
+                if (response.data.success) {
+                  this.logs = response.data.data;
+                  this.totalLogs = response.data.totalRecords;
                 }
               } catch (error) {
                 console.error("Error fetching personnel:", error);
@@ -1504,6 +1574,7 @@
             },
           },
           mounted() {
+            this.fetchLogs();
             this.fetchPersonnel();
             this.fetchProvinces();
             this.fetchUsers();

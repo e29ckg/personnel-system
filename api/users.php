@@ -1,5 +1,6 @@
 <?php
 require 'db.php';
+require_once 'logger.php';
 
 // ป้องกัน: ต้องเป็นผู้ดูแลระบบที่ login แล้วเท่านั้นถึงจะใช้งานได้
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
@@ -91,6 +92,7 @@ try {
             $sql = "INSERT INTO users (username, password, full_name, role) VALUES (?, ?, ?, ?)";
             $stmt = $pdo->prepare($sql);
             $stmt->execute([$username, $hashedPassword, $full_name, $role]);
+            log_activity($pdo, 'create_user', $lastId);
             echo json_encode(['success' => true, 'message' => 'เพิ่มผู้ใช้งานสำเร็จ']);
             break;
 
@@ -117,6 +119,7 @@ try {
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute([$full_name, $role, $id]);
             }
+            log_activity($pdo, 'update_user', $id);
             echo json_encode(['success' => true, 'message' => 'แก้ไขข้อมูลผู้ใช้สำเร็จ']);
             break;
 
@@ -137,6 +140,7 @@ try {
 
             $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
             $stmt->execute([$id]);
+            log_activity($pdo, 'delete_user', $id);
             echo json_encode(['success' => true, 'message' => 'ลบผู้ใช้งานสำเร็จ']);
             break;
 

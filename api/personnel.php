@@ -1,6 +1,7 @@
 <?php
 require 'db.php';
 require_once 'config.php';
+require_once 'logger.php';
 
 // ================== ส่วนของการตรวจสอบสิทธิ์ ==================
 // ตรวจสอบว่าได้ Login แล้ว และมี role เป็น 'admin' เท่านั้น
@@ -180,7 +181,7 @@ try {
                 $_POST['remarks'] ?? null,
                 $imageFileName
             ]);
-
+            log_activity($pdo, 'create_personnel', $lastId);
             echo json_encode(['success' => true, 'message' => 'เพิ่มข้อมูลสำเร็จ']);
             break;
 
@@ -248,7 +249,7 @@ try {
                 $imageFileName,
                 $id // ID สำหรับ WHERE clause
             ]);
-
+            log_activity($pdo, 'update_personnel', $id);
             echo json_encode(['success' => true, 'message' => 'แก้ไขข้อมูลสำเร็จ']);
             break;
 
@@ -271,7 +272,7 @@ try {
 
             $stmt = $pdo->prepare("DELETE FROM personnel WHERE id = ?");
             $stmt->execute([$id]);
-
+            log_activity($pdo, 'delete_personnel', $id);
             echo json_encode(['success' => true, 'message' => 'ลบข้อมูลสำเร็จ']);
             break;
 

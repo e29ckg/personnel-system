@@ -28,6 +28,9 @@ if ($action === 'login') {
             $_SESSION['full_name'] = $user['full_name'];
             $_SESSION['role'] = $user['role'];
 
+            require_once 'logger.php';
+            log_activity($pdo, 'login_success');
+
             echo json_encode([
                 'success' => true,
                 'message' => 'เข้าสู่ระบบสำเร็จ',

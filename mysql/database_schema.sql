@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.1.3
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 29, 2025 at 03:39 PM
--- Server version: 10.4.24-MariaDB
--- PHP Version: 7.4.28
+-- Generation Time: Jul 26, 2025 at 07:01 AM
+-- Server version: 10.4.32-MariaDB
+-- PHP Version: 8.0.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -42,6 +42,7 @@ CREATE TABLE `personnel` (
   `phone_number` varchar(20) DEFAULT NULL,
   `addr_houseno` varchar(50) DEFAULT NULL COMMENT 'เลขที่บ้าน',
   `addr_moo` varchar(10) DEFAULT NULL COMMENT 'หมู่ที่',
+  `addr_villagename` varchar(100) DEFAULT NULL COMMENT 'ชื่อหมู่บ้าน',
   `addr_tambon` varchar(100) DEFAULT NULL COMMENT 'ตำบล/แขวง',
   `addr_amphoe` varchar(100) DEFAULT NULL COMMENT 'อำเภอ/เขต',
   `addr_changwat` varchar(100) DEFAULT NULL COMMENT 'จังหวัด',
@@ -64,9 +65,30 @@ CREATE TABLE `personnel` (
 --
 
 INSERT INTO `personnel` (`id`, `national_id`, `national_id_hash`, `rank`, `first_name`, `last_name`, `position`, `position_number`, `salary_rate`, `date_of_birth`, `education`, `phone_number`, `addr_houseno`, `addr_moo`, `addr_tambon`, `addr_amphoe`, `addr_changwat`, `addr_postalcode`, `appointment_unit`, `appointment_order`, `appointment_date`, `position_start_date`, `position_end_date`, `term_years`, `retirement_year`, `remarks`, `profile_image`, `created_at`, `updated_at`) VALUES
-(2, 'xDzTI2SnDEkOQzSN5vNlBDo6amVuc3FzbFdYRmw3VHIycXNQWHphbHdzcjQ4RkxDdXB6anRKVWt2aUhXdz0=', '664507a78495f1975019158003e84599828a79103ebf34cbd8b958fbc38ecaed', 'นาย', 'พเยาว์', 'สนพลาย', 'กำนัน', NULL, NULL, '2025-06-27', 'ปริญญาตรี', 'สสส', '205', '16', 'ท่าลาด', 'เรณูนคร', 'นครพนม', '48170', NULL, NULL, NULL, NULL, NULL, 60, NULL, NULL, 'personnel_6861264f8435f4.42526996_magnifying-glass_12549583.png', '2025-06-28 05:01:14', '2025-06-29 13:36:53');
+(2, '5YM7d3IYtim8ixmuoo5BsDo6RHVLZ2tSQjM4SW5zeTEyS0dyRlhlUT09', '9d9ec65129ba010a5a766d4273625b85562e44ec40f46486496dba7c74389ea0', 'นาย', 'พเยาว์', 'สนพลาย', 'กำนัน', NULL, NULL, '2025-06-27', 'ปริญญาตรี', 'สสส', '205', '16', 'ดอนเจดีย์', 'ดอนเจดีย์', 'สุพรรณบุรี', '72170', NULL, NULL, NULL, NULL, NULL, 4, NULL, NULL, 'personnel_6861266cd79307.73059900_magnifying-glass_12549583.png', '2025-06-28 05:01:14', '2025-06-29 11:41:32'),
+(3, '1235567890-', NULL, 'นาย', 'ทดสอบ', 'ไทย', 'กำนัน', NULL, NULL, '2025-06-27', 'มัธยมศึกษาปีที่ 6', NULL, NULL, NULL, 'ไร่ใหม่', 'สามร้อยยอด', 'ประจวบคีรีขันธ์', '77180', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'personnel_686090d84b1451.33904136_464333089_1092414825684374_4183084385761129294_n.jpg', '2025-06-28 13:24:18', '2025-06-29 01:03:20');
 
 -- --------------------------------------------------------
+
+--
+-- Table structure for table `activity_logs`
+--
+
+CREATE TABLE `activity_logs` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) DEFAULT NULL,
+  `username` varchar(50) NOT NULL,
+  `action` varchar(50) NOT NULL COMMENT 'e.g., login, create_personnel, delete_user',
+  `target_id` int(11) DEFAULT NULL COMMENT 'ID of the affected record',
+  `details` text DEFAULT NULL COMMENT 'Additional details, e.g., error messages or changed values',
+  `ip_address` varchar(45) DEFAULT NULL,
+  `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  KEY `action` (`action`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
 
 --
 -- Table structure for table `thai_amphures`
@@ -74,8 +96,8 @@ INSERT INTO `personnel` (`id`, `national_id`, `national_id_hash`, `rank`, `first
 
 CREATE TABLE `thai_amphures` (
   `id` int(11) NOT NULL,
-  `name_th` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `name_en` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name_th` varchar(150) NOT NULL,
+  `name_en` varchar(150) NOT NULL,
   `province_id` int(11) NOT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
@@ -1026,8 +1048,8 @@ INSERT INTO `thai_amphures` (`id`, `name_th`, `name_en`, `province_id`, `created
 
 CREATE TABLE `thai_provinces` (
   `id` int(11) NOT NULL,
-  `name_th` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `name_en` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name_th` varchar(150) NOT NULL,
+  `name_en` varchar(150) NOT NULL,
   `geography_id` int(11) NOT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
@@ -1126,8 +1148,8 @@ INSERT INTO `thai_provinces` (`id`, `name_th`, `name_en`, `geography_id`, `creat
 CREATE TABLE `thai_tambons` (
   `id` int(11) NOT NULL,
   `zip_code` int(11) NOT NULL,
-  `name_th` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `name_en` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name_th` varchar(150) NOT NULL,
+  `name_en` varchar(150) NOT NULL,
   `amphure_id` int(11) NOT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
@@ -8644,7 +8666,7 @@ CREATE TABLE `users` (
   `full_name` varchar(100) DEFAULT NULL,
   `role` enum('admin','member') NOT NULL DEFAULT 'member',
   `created_at` timestamp NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `users`
@@ -8652,7 +8674,9 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `username`, `password`, `full_name`, `role`, `created_at`) VALUES
 (1, 'admin', '$2y$10$oQDlONUFVC8OBlNY.VH.suTPFxb6LBfC5rTowySg0DPQHCiyjF8g6', 'Admin', 'admin', '2025-06-28 02:55:08'),
-(2, 'user', '$2y$10$tZjn2jTP0taHY/.WhEjaRuSeAOTrlBiFtPKGh.Px8AcOndyYF3TqK', 'okp', 'member', '2025-06-28 16:21:12');
+(4, 'wasan_per', '$2y$10$kejHPef1wbvI82LHnyNW5uWGLR02EjVuZvISdFYVqER/V9QGNW3ly', 'นายวสันต์  อ่อนสอาด', 'member', '2025-06-28 17:41:37'),
+(5, 'user', '$2y$10$hoi6FHw03D0Pw8XENY9W4esSOD/NIrQyj7BzCHJEkm.BEDrzP5uVO', 'User', 'member', '2025-06-29 10:44:41'),
+(7, 'ju', '$2y$10$O76iRTer0Cy4jU1R1xkRRe5xDjIGswUyG4Bf4tp4JX7K24z0R00w.', 'ป้าจุ คนสวย ที่สุดในความมึด', 'admin', '2025-06-30 07:54:43');
 
 --
 -- Indexes for dumped tables
@@ -8699,13 +8723,13 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `personnel`
 --
 ALTER TABLE `personnel`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

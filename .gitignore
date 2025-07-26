@@ -1,5 +1,6 @@
 # ไฟล์การตั้งค่าฐานข้อมูล (สำคัญที่สุด!!!)
 .env
+.env.testing
 
 # Composer dependencies
 /vendor/
