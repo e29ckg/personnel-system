@@ -28,11 +28,16 @@ function decrypt_data($data)
 
     @list($iv, $encrypted_data) = explode('::', base64_decode($data), 2);
 
-    if ($iv && $encrypted_data) {
-        return openssl_decrypt($encrypted_data, ENCRYPTION_CIPHER, ENCRYPTION_KEY, 0, $iv);
+    // if ($iv && $encrypted_data) {
+    //     return openssl_decrypt($encrypted_data, ENCRYPTION_CIPHER, ENCRYPTION_KEY, 0, $iv);
+    // }
+    $decrypted_data = openssl_decrypt($encrypted_data, ENCRYPTION_CIPHER, ENCRYPTION_KEY, 0, $iv);
+
+    if ($decrypted_data === false) {
+        return "";
     }
 
-    return '';
+    return $decrypted_data;
 }
 
 // รับค่า action จาก POST (สำหรับ create/update ที่มีไฟล์) หรือ GET (สำหรับ read)
