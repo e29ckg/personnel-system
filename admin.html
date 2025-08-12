@@ -57,7 +57,7 @@
               data-bs-target="#personnel-tab-pane"
               type="button"
               role="tab"
-              @click="tapMenu = 'personnelTab'"
+              @click="fetchPersonnel"
             >
               <i class="fas fa-users"></i> จัดการ ผู้กำกับดูแล
             </button>
@@ -70,7 +70,7 @@
               data-bs-target="#users-tab-pane"
               type="button"
               role="tab"
-              @click="tapMenu = 'usersTab'"
+              @click="fetchUsers"
             >
               <i class="fas fa-user-cog"></i> จัดการผู้ใช้งาน
             </button>
@@ -1164,6 +1164,7 @@
           },
           methods: {
             async fetchPersonnel() {
+              this.tapMenu = "personnelTab";
               try {
                 // สร้าง URL พร้อม parameters
                 const params = new URLSearchParams({
@@ -1405,6 +1406,7 @@
             },
 
             async fetchUsers() {
+              this.tapMenu = "usersTab";
               try {
                 const params = new URLSearchParams({
                   action: "read",

@@ -92,6 +92,7 @@ try {
             $sql = "INSERT INTO users (username, password, full_name, role) VALUES (?, ?, ?, ?)";
             $stmt = $pdo->prepare($sql);
             $stmt->execute([$username, $hashedPassword, $full_name, $role]);
+            $lastId = $pdo->lastInsertId();
             log_activity($pdo, 'create_user', $lastId);
             echo json_encode(['success' => true, 'message' => 'เพิ่มผู้ใช้งานสำเร็จ']);
             break;

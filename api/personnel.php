@@ -16,28 +16,38 @@ function encrypt_data($data)
     $iv_length = openssl_cipher_iv_length(ENCRYPTION_CIPHER);
     $iv = openssl_random_pseudo_bytes($iv_length);
     $encrypted = openssl_encrypt($data, ENCRYPTION_CIPHER, ENCRYPTION_KEY, 0, $iv);
-    // รวม iv กับข้อมูลที่เข้ารหัสแล้ว เพื่อใช้ในการถอดรหัส
     return base64_encode($iv . '::' . $encrypted);
 }
 
 function decrypt_data($data)
 {
-    if (strpos(base64_decode($data), '::') === false) {
-        return $data; // ส่งข้อมูลเดิมกลับไปเลย
+    // ใช้ strict mode เพื่อให้แน่ใจว่า base64 string ถูกต้อง
+    $decoded_data = base64_decode($data, true);
+
+    // ตรวจสอบว่าข้อมูลสามารถ decode ได้ และมีตัวคั่น '::' หรือไม่
+    if ($decoded_data === false || strpos($decoded_data, '::') === false) {
+        // ถ้าไม่ถูกต้อง แสดงว่าเป็นข้อมูลเก่า/ผิดรูปแบบ ให้ส่งค่าเดิมกลับไป
+        return $data;
     }
 
-    @list($iv, $encrypted_data) = explode('::', base64_decode($data), 2);
+    // ใช้ @ เพื่อซ่อน Notice กรณีที่ข้อมูลผิดรูปแบบจริงๆ
+    @list($iv, $encrypted_data) = explode('::', $decoded_data, 2);
 
-    // if ($iv && $encrypted_data) {
-    //     return openssl_decrypt($encrypted_data, ENCRYPTION_CIPHER, ENCRYPTION_KEY, 0, $iv);
-    // }
+    // --- เพิ่มการตรวจสอบความยาวของ IV (สำคัญที่สุด) ---
+    // ตรวจสอบว่า IV ที่แยกออกมาได้ มีความยาวตรงตามที่ cipher ต้องการหรือไม่
+    if (strlen($iv) !== openssl_cipher_iv_length(ENCRYPTION_CIPHER)) {
+        // ถ้าความยาวไม่ถูกต้อง ให้คืนค่าเป็นข้อความแจ้งข้อผิดพลาด หรือค่าว่าง
+        // เพื่อให้รู้ว่าข้อมูลรายการนี้มีปัญหา
+        error_log("Decryption failed: Invalid IV length for target data.");
+        return "[ข้อมูลเสียหาย]"; // หรือ return '';
+    }
+    // --- จบส่วนที่เพิ่มเข้ามา ---
+
+    // ถ้าทุกอย่างถูกต้อง ให้ทำการถอดรหัส
     $decrypted_data = openssl_decrypt($encrypted_data, ENCRYPTION_CIPHER, ENCRYPTION_KEY, 0, $iv);
 
-    if ($decrypted_data === false) {
-        return "";
-    }
-
-    return $decrypted_data;
+    // คืนค่าที่ถอดรหัสแล้ว หรือค่าว่างถ้าการถอดรหัสล้มเหลว
+    return $decrypted_data === false ? "" : $decrypted_data;
 }
 
 // รับค่า action จาก POST (สำหรับ create/update ที่มีไฟล์) หรือ GET (สำหรับ read)
@@ -148,7 +158,7 @@ try {
             $imageFileName = handleFileUpload($_FILES['profile_image'] ?? null, $uploadDir);
 
             $sql = "INSERT INTO personnel (
-                        national_id, national_id_hash `rank`, first_name, last_name, position, position_number, 
+                        national_id, national_id_hash, `rank`, first_name, last_name, position, position_number, 
                         salary_rate, date_of_birth, education, phone_number, 
                         addr_houseno, addr_moo, addr_tambon, addr_amphoe, addr_changwat, addr_postalcode,
                         appointment_unit, appointment_order, appointment_date, 
@@ -186,6 +196,7 @@ try {
                 $_POST['remarks'] ?? null,
                 $imageFileName
             ]);
+            $lastId = $pdo->lastInsertId();
             log_activity($pdo, 'create_personnel', $lastId);
             echo json_encode(['success' => true, 'message' => 'เพิ่มข้อมูลสำเร็จ']);
             break;
